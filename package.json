@@ -1,5 +1,5 @@
 {
-  "name": "bex-projop-api",
+  "name": "projop-api",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,6 +12,6 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
-    "pg": "^8.4.1"
+    "pg": "^8.5.1"
   }
 }
