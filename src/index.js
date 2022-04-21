@@ -75,4 +75,5 @@ app.get('/', function(req, res){
    res.send("Server is up!");
 });
 
-app.listen(3000);
+const port = process.env.PORT || 8080;
+app.listen(port);
