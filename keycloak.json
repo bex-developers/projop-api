@@ -1,0 +1,7 @@
+{
+    "realm": "bex-soporte",
+    "bearer-only": true,
+    "auth-server-url": "https://idp.bex.com.pe:8443/auth/",
+    "ssl-required": "external",
+    "resource": "projop-api"
+  }

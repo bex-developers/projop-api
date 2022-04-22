@@ -1,12 +1,17 @@
-var session = require('express-session');
-var memoryStore = new session.MemoryStore();
-
-var Keycloak = require('keycloak-connect');
+//var session = require('express-session');
+const session = require('express-session')
+//var memoryStore = new session.MemoryStore();
+//const memoryStore = new session.MemoryStore();
+const Keycloak = require('keycloak-connect');
 
 const bodyParser = require("body-parser");
 var cors=require('cors');
 var express = require('express');
 var app = express();
+
+const memoryStore = new session.MemoryStore();
+// const keycloak = require('./config/keycloak-config.js').initKeycloak();
+// app.use(keycloak.middleware());
 
 const { getTickets } = require('./controllers/index.controller');
 const { getTicketsAdmin } = require('./controllers/index.controller');
@@ -26,15 +31,16 @@ const { solution_category } = require('./controllers/index.controller');
 const { create_ticket } = require('./controllers/index.controller');
 
 
-let kcConfig = {
- clientId: 'projop-api',
-  bearerOnly: true,
-  serverUrl: 'https://idp.bex.com.pe:8443/auth/',
-  realm: 'bex-soporte',
-  realmPublicKey:'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAreMm6oV2lgLnUQ7SUW85fpXqgyJK48NoYLn11IWvEBOz6y3elhEN1d9y0XSpe8/+UAEinPPix7SPp+hKi/+SsWnAGTBjvb0kBriBIzXBHzdd6UfwwRRKRP+VfPYhm+xw9ie545HiT99/aN5uAZhHpbF2kECXgT+QVj1Xh171CR1EVNuVCFa6l2xg76mPa/YDslkl0o98DZvlm1jtR/iTWxvMwWmJnQnybOT3Jyk8PUrUjhqCmmvGuVPMl+zD3Rt32ZK83M66ee7JchI/R3DBVFzH8VaKbWkZmpui7ywHhKCYDpBANN6V1Dw72kMG3GPTriEbNYUrK0lSQLSSouAVQwIDAQAB'
-
-};
-let keycloak = new Keycloak({ store: memoryStore }, kcConfig);
+// let kcConfig = {
+//  clientId: 'projop-api',
+//   bearerOnly: true,
+//   serverUrl: 'https://idp.bex.com.pe:8443/auth/',
+//   realm: 'bex-soporte',
+//   realmPublicKey:'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAreMm6oV2lgLnUQ7SUW85fpXqgyJK48NoYLn11IWvEBOz6y3elhEN1d9y0XSpe8/+UAEinPPix7SPp+hKi/+SsWnAGTBjvb0kBriBIzXBHzdd6UfwwRRKRP+VfPYhm+xw9ie545HiT99/aN5uAZhHpbF2kECXgT+QVj1Xh171CR1EVNuVCFa6l2xg76mPa/YDslkl0o98DZvlm1jtR/iTWxvMwWmJnQnybOT3Jyk8PUrUjhqCmmvGuVPMl+zD3Rt32ZK83M66ee7JchI/R3DBVFzH8VaKbWkZmpui7ywHhKCYDpBANN6V1Dw72kMG3GPTriEbNYUrK0lSQLSSouAVQwIDAQAB'
+  
+// };
+//const keycloak = require('./config/keycloak-config.js').initKeycloak(memoryStore);
+//let keycloak = new Keycloak({ store: memoryStore }, kcConfig);
 /* app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method');
@@ -44,10 +50,21 @@ let keycloak = new Keycloak({ store: memoryStore }, kcConfig);
 }); 
 */
 app.use(cors({origin:true,credentials: true}));
-app.use( keycloak.middleware() )
+//app.use( keycloak.middleware() )
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+//Agregamos
+app.use(session({ secret: 'f70a3643-5961-462a-b982-8c29f2fb0de8', resave: false, saveUninitialized: true, store: memoryStore }));
+
+const keycloak = new Keycloak({
+  store: memoryStore
+});
+
+app.use(keycloak.middleware({
+  // logout: '/logout',
+  // admin: '/'
+}));
 
 //app.get('/tickets', keycloak.protect('Customer'), getTickets);
 //app.post('/tickets', getTickets); helpdesk
