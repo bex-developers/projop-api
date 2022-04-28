@@ -14,7 +14,6 @@ var keycloakConfig = {
     }
 }
 
-
 // function initKeycloak() {
 //     if (_keycloak) {
 //         console.warn("Trying to init Keycloak again!");
