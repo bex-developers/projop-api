@@ -66,8 +66,23 @@ app.use(keycloak.middleware({
   // admin: '/'
 }));
 
-//app.get('/tickets', keycloak.protect('Customer'), getTickets);
-//app.post('/tickets', getTickets); helpdesk
+
+// app.get('/tickets/:company_id/:fecha_inicial/:fecha_final', keycloak.protect(['customer','helpdesk']), getTickets);
+// app.get('/ticketsAdmin/:fecha_inicial/:fecha_final', keycloak.protect(['admin']), getTicketsAdmin);
+// app.get('/ticketsHelpDesk/:person_id/:fecha_inicial/:fecha_final', keycloak.protect(['helpdesk']), getTicketsHelpDesk);
+// app.get('/tickets/company_info/:company_id', keycloak.protect(['customer','helpdesk']), getCompanyInfo);
+// app.get('/tickets/types',keycloak.protect(['customer','helpdesk', 'admin']), types);
+// app.get('/tickets/priority',keycloak.protect(['customer','helpdesk', 'admin']), priority);
+// app.get('/tickets/catalog',keycloak.protect(['customer','helpdesk', 'admin']), catalog);
+// app.get('/tickets/solution_category',keycloak.protect(['customer','helpdesk', 'admin']), solution_category);
+// app.get('/tickets/customer_project/:company_id',keycloak.protect(['customer','helpdesk']), customer_project);
+
+// app.get('/tickets/customer_company/:company_id',keycloak.protect(['customer','helpdesk']), customer_company);
+// app.get('/tickets/customer_class',keycloak.protect(['customer','helpdesk', 'admin']), customer_class);
+// app.get('/tickets/system/:company_id',keycloak.protect(['customer','helpdesk']), system);
+// app.get('/tickets/support_project/:company_id',keycloak.protect(['customer','helpdesk']), support_project);
+// app.get('/tickets/status_ticket',keycloak.protect(['customer','helpdesk', 'admin']), status_ticket);
+
 app.get('/tickets/:company_id/:fecha_inicial/:fecha_final', keycloak.protect(['customer','helpdesk']), getTickets);
 app.get('/ticketsAdmin/:fecha_inicial/:fecha_final', keycloak.protect(['admin']), getTicketsAdmin);
 app.get('/ticketsHelpDesk/:person_id/:fecha_inicial/:fecha_final', keycloak.protect(['helpdesk']), getTicketsHelpDesk);
@@ -82,8 +97,7 @@ app.get('/tickets/customer_company/:company_id',keycloak.protect(['customer','he
 app.get('/tickets/customer_class',keycloak.protect(['customer','helpdesk', 'admin']), customer_class);
 app.get('/tickets/system/:company_id',keycloak.protect(['customer','helpdesk']), system);
 app.get('/tickets/support_project/:company_id',keycloak.protect(['customer','helpdesk']), support_project);
-app.get('/tickets/status_ticket',keycloak.protect(['customer','helpdesk', 'admin']), status_ticket);
-
+app.get('/tickets/status_ticket', status_ticket);
 
 app.post('/tickets/create_ticket', create_ticket);
 //app.get('/tickets/:company_id/:fecha_inicial/:fecha_final', getTickets);
@@ -94,3 +108,9 @@ app.get('/', function(req, res){
 
 const port = process.env.PORT || 8080;
 app.listen(port);
+
+// const port = 3000;
+
+// app.listen(port, () => {
+//   console.log(`Example app listening on port ${port}`)
+// })
