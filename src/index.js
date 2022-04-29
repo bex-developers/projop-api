@@ -95,7 +95,7 @@ app.get('/tickets/customer_project/:company_id',keycloak.protect(['customer','he
 
 app.get('/tickets/customer_company/:company_id',keycloak.protect(['customer','helpdesk']), customer_company);
 app.get('/tickets/customer_class',keycloak.protect(['customer','helpdesk', 'admin']), customer_class);
-app.get('/tickets/system/:company_id',keycloak.protect(['customer','helpdesk']), system);
+app.get('/tickets/system/:company_id', system);
 app.get('/tickets/support_project/:company_id', support_project);
 app.get('/tickets/status_ticket', status_ticket);
 
