@@ -96,7 +96,7 @@ app.get('/tickets/customer_project/:company_id',keycloak.protect(['customer','he
 app.get('/tickets/customer_company/:company_id',keycloak.protect(['customer','helpdesk']), customer_company);
 app.get('/tickets/customer_class',keycloak.protect(['customer','helpdesk', 'admin']), customer_class);
 app.get('/tickets/system/:company_id',keycloak.protect(['customer','helpdesk']), system);
-app.get('/tickets/support_project/:company_id',keycloak.protect(['customer','helpdesk']), support_project);
+app.get('/tickets/support_project/:company_id', support_project);
 app.get('/tickets/status_ticket', status_ticket);
 
 app.post('/tickets/create_ticket', create_ticket);
@@ -109,8 +109,8 @@ app.get('/', function(req, res){
 const port = process.env.PORT || 8080;
 app.listen(port);
 
+// if port 8080 is not available, use port 3000
 // const port = 3000;
-
 // app.listen(port, () => {
 //   console.log(`Example app listening on port ${port}`)
 // })
