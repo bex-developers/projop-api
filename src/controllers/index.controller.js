@@ -1,13 +1,15 @@
+//const { config } = require('dotenv');
+const config =  require('../config.js');
 const { Pool } = require('pg');
 //const keycloak = require('../config/keycloak-config.js').getKeycloak();
 
 const pool = new Pool({
    // user: process.env.SQL_USER,
-   user: 'projoprep',
-    host: '104.198.22.177',
-    password: 'Basis2019$',
-    database: 'projop',
-    port: '5432'
+   user: config.DB_USER,
+    host: config.DB_HOST,
+    password: config.DB_PASSWORD,
+    database: config.DB_DATABASE,
+    port: config.DB_PORT
 });
 
 const support_project = async (req, res, next) => {
@@ -267,6 +269,46 @@ const customer_class = async (req, res, next) => {
       }
 }
 
+const getTicketsAll = async (req, res, next) => {
+    try{
+        // aumentar rol 
+        console.log('company_id', req.params.company_id )
+         const  company_id   = req.params.company_id;
+        //const response = await pool.query('SELECT * FROM im_tickets ORDER BY ticket_id ASC');
+   
+        const response = await pool.query(`select p.project_nr as NR, p.project_name as Nombre, 
+          
+                                            (SELECT string_agg(note, ', ') AS NOTE FROM im_hours WHERE project_id = p.project_id  GROUP BY project_id) ACTIVITIES,
+                                            im_category_from_id(t.ticket_status_id) as STATUS, 
+                                            im_category_from_id(t.ticket_type_id) as TYPE,
+                                            im_category_from_id(t.ticket_prio_id) as PRIO, 
+                                            acs_object__name(t.ticket_customer_contact_id) as CONTACT_NAME, 
+                                            (SELECT email as MAIL FROM parties where party_id = t.ticket_customer_contact_id ) MAIL,
+                                            acs_object__name(t.ticket_assignee_id) as ASSIGNEE, 
+                                            acs_object__name(t.ticket_conf_item_id) as CONF_ITEM, 
+                                            t.ticket_creation_date as CREATION_DATE, 
+                                            t.ticket_done_date as DONE_DATE, t.ticket_irt as IRT, 
+                                            t.ticket_mpt as MPT, 
+                                            t.ticket_solution as TICKET_SOLUTION, 
+                                            t.ticket_quoted_hours as QUOTED_HOURS, 
+                                            im_category_from_id(t.ticket_customer_project) as CUSTOMER_PROJECT, 
+                                            im_category_from_id(t.ticket_service_catalog) as SERVICE_CATALOG, 
+                                            im_category_from_id(t.ticket_customer_company) as CUSTOMER_COMPANY, 
+                                            im_category_from_id(t.ticket_custom_class) as CUSTOM_CLASS, 
+                                            im_category_from_id(t.ticket_solution_category) as SOLUTION_CATEGORY,
+                                            to_char(p.reported_hours_cache, '999D9') as REPORTED_HOURS 
+                                            from im_tickets t, im_projects p, acs_objects o 
+                                            where t.ticket_id = p.project_id 
+                                            and t.ticket_id = o.object_id 
+                                            and p.company_id = ${company_id} 
+                                            order by t.ticket_creation_date DESC `);                                     
+        res.status(200).json(response.rows);
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
 const create_ticket = async (req, res, next) => {
     try{   
     var p_ticket_id           = req.body.p_ticket_id;
@@ -342,7 +384,8 @@ module.exports = {
     system,
     create_ticket,
     status_ticket,
-    getCompanyInfo
+    getCompanyInfo,
+    getTicketsAll
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 

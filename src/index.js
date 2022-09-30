@@ -3,6 +3,18 @@ const session = require('express-session')
 //var memoryStore = new session.MemoryStore();
 //const memoryStore = new session.MemoryStore();
 const Keycloak = require('keycloak-connect');
+//Cargamos archivo de configuracion
+
+const config =  require('./config.js');
+
+/* require('dotenv').config({
+  path: `.env.${process.env.NODE_ENV}`
+}); */
+//require('dotenv').config();
+//require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
+
+
+
 
 const bodyParser = require("body-parser");
 var cors=require('cors');
@@ -29,6 +41,7 @@ const { status_ticket } = require('./controllers/index.controller');
 const { solution_category } = require('./controllers/index.controller');
 
 const { create_ticket } = require('./controllers/index.controller');
+const { getTicketsAll } = require('./controllers/index.controller');
 
 
 // let kcConfig = {
@@ -100,14 +113,27 @@ app.get('/tickets/support_project/:company_id', support_project);
 app.get('/tickets/status_ticket', status_ticket);
 
 app.post('/tickets/create_ticket', create_ticket);
+
+app.get('/tickets/:company_id', getTicketsAll);
 //app.get('/tickets/:company_id/:fecha_inicial/:fecha_final', getTickets);
 
+
+//app.listen(port);
+console.log(`Running in NODE_ENV=${config.NODE_ENV}`);
+console.log('The value of PORT is:', config.PORT);
+//const port = config.PORT;
+const port = config.PORT;
+app.listen(port, () =>
+  console.log(`listening on port ${port}`)
+);
+//app.listen(port);
+
 app.get('/', function(req, res){
-   res.send("Server is up!");
+   //res.send("Server is up!");
+   res.json({status: 'API is ready listen request from ' + config.PORT});
 });
 
-const port = process.env.PORT || 8080;
-app.listen(port);
+
 
 // if port 8080 is not available, use port 3000
 // const port = 3000;
