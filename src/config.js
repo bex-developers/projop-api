@@ -4,7 +4,7 @@ const path = require('path');
 dotenv.config({
     path: __dirname + `/../env.${process.env.NODE_ENV}`
 });
-console.log(path);
+
 module.exports = {
     NODE_ENV : process.env.NODE_ENV || 'development',
     PORT : process.env.PORT ,
