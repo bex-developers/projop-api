@@ -321,6 +321,29 @@ const getCatalog = async (req, res, next) => {
       }
 }
 
+const getServiceCatalog = async (req, res, next) => {
+    try{
+        // aumentar rol 
+        console.log('category_id', req.params.category_id )
+         const  category_id   = req.params.category_id;;
+        //const response = await pool.query('SELECT * FROM im_tickets ORDER BY ticket_id ASC');
+   
+        const response = await pool.query(`select category_id,
+                                            category, category_description, 
+                                            aux_int1 as hours, aux_int2 as lead_time, 
+                                            aux_string1 as downtime, aux_string2 as service_type 
+                                            from im_categories 
+                                            where category_type = 'Intranet Service Catalog' 
+                                            and enabled_p = 't' 
+                                            and aux_int1 is not null
+                                            and category_id= ${category_id} `);                                     
+        res.status(200).json(response.rows);
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
 const create_ticket = async (req, res, next) => {
     try{   
     var p_ticket_id           = req.body.p_ticket_id;
@@ -398,7 +421,8 @@ module.exports = {
     status_ticket,
     getCompanyInfo,
     getTicketsAll,
-    getCatalog
+    getCatalog,
+    getServiceCatalog
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 
