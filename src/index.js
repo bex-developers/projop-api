@@ -42,6 +42,7 @@ const { solution_category } = require('./controllers/index.controller');
 
 const { create_ticket } = require('./controllers/index.controller');
 const { getTicketsAll } = require('./controllers/index.controller');
+const { getCatalog } = require('./controllers/index.controller');
 
 
 // let kcConfig = {
@@ -115,6 +116,7 @@ app.get('/tickets/status_ticket', status_ticket);
 app.post('/tickets/create_ticket', create_ticket);
 
 app.get('/tickets/:company_id', getTicketsAll);
+app.get('/tickets/service_catalog', getCatalog);
 //app.get('/tickets/:company_id/:fecha_inicial/:fecha_final', getTickets);
 
 

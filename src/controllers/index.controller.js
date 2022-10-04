@@ -309,6 +309,18 @@ const getTicketsAll = async (req, res, next) => {
       }
 }
 
+const getCatalog = async (req, res, next) => {
+    try{
+         
+       // const response = await pool.query("select category from im_categories where category_type = 'Intranet Service Catalog' and enabled_p = 't' and aux_int1 is not null");
+        const response = await pool.query("select category, category_description,aux_int1 as hours, aux_int2 as lead_time,aux_string1 as downtime, aux_string2 as service_type from im_categories where category_type = 'Intranet Service Catalog' and enabled_p = 't' and aux_int1 is not null");                                     
+        res.status(200).json(response.rows);
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
 const create_ticket = async (req, res, next) => {
     try{   
     var p_ticket_id           = req.body.p_ticket_id;
@@ -385,7 +397,8 @@ module.exports = {
     create_ticket,
     status_ticket,
     getCompanyInfo,
-    getTicketsAll
+    getTicketsAll,
+    getCatalog
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 
