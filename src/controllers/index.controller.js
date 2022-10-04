@@ -313,7 +313,7 @@ const getCatalog = async (req, res, next) => {
     try{
          
        // const response = await pool.query("select category from im_categories where category_type = 'Intranet Service Catalog' and enabled_p = 't' and aux_int1 is not null");
-        const response = await pool.query("select category, category_description,aux_int1 as hours, aux_int2 as lead_time,aux_string1 as downtime, aux_string2 as service_type from im_categories where category_type = 'Intranet Service Catalog' and enabled_p = 't' and aux_int1 is not null");                                     
+        const response = await pool.query("select category_id, category, category_description,aux_int1 as hours, aux_int2 as lead_time,aux_string1 as downtime, aux_string2 as service_type from im_categories where category_type = 'Intranet Service Catalog' and enabled_p = 't' and aux_int1 is not null");                                     
         res.status(200).json(response.rows);
     }
     catch (err) {
