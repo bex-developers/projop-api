@@ -116,7 +116,7 @@ app.get('/tickets/status_ticket', status_ticket);
 app.post('/tickets/create_ticket', create_ticket);
 
 app.get('/tickets/:company_id', getTicketsAll);
-app.get('/tickets/service_catalog', getCatalog);
+app.get('/service_catalog', getCatalog);
 //app.get('/tickets/:company_id/:fecha_inicial/:fecha_final', getTickets);
 
 
