@@ -311,10 +311,52 @@ const getTicketsAll = async (req, res, next) => {
 
 const getCatalog = async (req, res, next) => {
     try{
-         
+        //paginacion
        // const response = await pool.query("select category from im_categories where category_type = 'Intranet Service Catalog' and enabled_p = 't' and aux_int1 is not null");
-        const response = await pool.query("select category_id, category, category_description,aux_int1 as hours, aux_int2 as lead_time,aux_string1 as downtime, aux_string2 as service_type from im_categories where category_type = 'Intranet Service Catalog' and enabled_p = 't' and aux_int1 is not null");                                     
+        const response = await pool.query(`select 
+                                            category_id, category, category_description,
+                                            aux_int1 as hours, 
+                                            aux_int2 as lead_time,
+                                            aux_string1 as downtime, 
+                                            aux_string2 as service_type 
+                                            from im_categories 
+                                            where category_type = 'Intranet Service Catalog' 
+                                            and enabled_p = 't' 
+                                            and aux_int1 is not null`);                                     
         res.status(200).json(response.rows);
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+// tutorial https://dirask.com/posts/Node-js-Express-js-PostgreSQL-rows-pagination-jPEqm1
+const getCatalogPage = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const { page, size } = req.query;
+        const query = `
+                    select 
+                    category_id, category, category_description,
+                    aux_int1 as hours, 
+                    aux_int2 as lead_time,
+                    aux_string1 as downtime, 
+                    aux_string2 as service_type 
+                    from im_categories 
+                    where category_type = 'Intranet Service Catalog' 
+                    and enabled_p = 't' 
+                    and aux_int1 is not null
+                    ORDER BY category
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2)
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
     }
     catch (err) {
         next(err);
@@ -325,7 +367,7 @@ const getServiceCatalog = async (req, res, next) => {
     try{
         // aumentar rol 
         console.log('category_id', req.params.category_id )
-         const  category_id   = req.params.category_id;;
+        const  category_id   = req.params.category_id;;
         //const response = await pool.query('SELECT * FROM im_tickets ORDER BY ticket_id ASC');
    
         const response = await pool.query(`select category_id,
@@ -338,6 +380,7 @@ const getServiceCatalog = async (req, res, next) => {
                                             and aux_int1 is not null
                                             and category_id= ${category_id} `);                                     
         res.status(200).json(response.rows);
+        
     }
     catch (err) {
         next(err);
@@ -404,6 +447,36 @@ const create_ticket = async (req, res, next) => {
       }
 }
 
+//Service Catalog Creation
+
+const create_service = async (req, res, next) => {
+    try{   
+    var p_category        = req.body.p_category;//"'im_ticket'";//
+    var p_category_description       = req.body.p_category_description;//req.body.p_creation_date;
+    var p_category_type       = "Intranet Service Catalog";
+    var p_aux_int1         = req.body.p_aux_int1;
+    var p_aux_int2         = req.body.p_aux_int2;
+    var p_aux_string1     = req.body.p_aux_string1;
+    var p_aux_string2    = req.body.p_aux_string2;
+   
+    console.log('cuerpo', req.body)
+    console.log(req.body.p_category)
+         
+      const response = await pool.query(`SELECT public.im_category_new_api(
+                                            '${p_category}', 
+                                            '${p_category_description}',                    
+                                            '${p_category_type}', 
+                                            ${p_aux_int1},  
+                                            ${p_aux_int2},  
+                                            '${p_aux_string1}',
+                                            '${p_aux_string2}')`);                                     
+        res.status(200).json(response.rows);
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
 module.exports = {
     getTickets,
     getTicketsAdmin,
@@ -422,7 +495,9 @@ module.exports = {
     getCompanyInfo,
     getTicketsAll,
     getCatalog,
-    getServiceCatalog
+    getCatalogPage,
+    getServiceCatalog,
+    create_service
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 
