@@ -1,5 +1,5 @@
 //const { config } = require('dotenv');
-const config =  require('../config.js');
+const config =  require('../config/config.js');
 const { Pool } = require('pg');
 //const keycloak = require('../config/keycloak-config.js').getKeycloak();
 
@@ -477,6 +477,75 @@ const create_service = async (req, res, next) => {
       }
 }
 
+// Servicio para obtener config items:
+
+const getTechSystem = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const company_id   = req.params.company_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT 
+                    conf_item_id, conf_item_name, conf_item_nr,
+                    conf_item_version, conf_item_code,
+                    lmdb_it_admin_role, lmdb_long_sid,
+                    lmdb_type, lmdb_install_number
+                    FROM im_conf_items
+                    where conf_item_customer_id = ${company_id}
+                    and conf_item_type_id = '10000316' 
+                    ORDER BY conf_item_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+// SERVICIO PARA OBTENER LOS CATALOS DE NIVEL RAIZ (son padrees mas no hijos)
+
+const getRootCatalog = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const { page, size } = req.query;
+        const query = `
+                    select 
+                    category_id, category, category_description,
+                    aux_int1 as hours, 
+                    aux_int2 as lead_time,
+                    aux_string1 as downtime, 
+                    aux_string2 as service_type 
+                    from im_categories 
+                    where category_type = 'Intranet Service Catalog' 
+                    and enabled_p = 't' 
+                    and category_id not in (SELECT child_id FROM im_category_hierarchy)
+                    ORDER BY category
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2)
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
 module.exports = {
     getTickets,
     getTicketsAdmin,
@@ -497,7 +566,9 @@ module.exports = {
     getCatalog,
     getCatalogPage,
     getServiceCatalog,
-    create_service
+    create_service,
+    getTechSystem,
+    getRootCatalog
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 
