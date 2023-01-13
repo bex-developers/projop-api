@@ -564,7 +564,75 @@ const getParentCatalog = async (req, res, next) => {
                     from im_categories 
                     where category_type = 'Intranet Service Catalog' 
                     and enabled_p = 't' 
-                    and category_id in (SELECT child_id FROM im_category_hierarchy where parent_id = ${parent_id} )
+                    and category_id in (SELECT child_id FROM im_category_hierarchy where parent_id = ${parent_id} and category_id in (SELECT parent_id FROM im_category_hierarchy))
+                    ORDER BY category
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2)
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+// SERVICIO PARA OBTENER LOS CATALOS DE NIVEL Hijo , los ultimos
+
+const getChildCatalog = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const parent_id   = req.params.parent_id;
+        const { page, size } = req.query;
+        const query = `
+                    select 
+                    category_id, category, category_description,
+                    aux_int1 as hours, 
+                    aux_int2 as lead_time,
+                    aux_string1 as downtime, 
+                    aux_string2 as service_type 
+                    from im_categories 
+                    where category_type = 'Intranet Service Catalog' 
+                    and enabled_p = 't' 
+                    and category_id in (SELECT child_id FROM im_category_hierarchy where parent_id = ${parent_id} and category_id not in (SELECT parent_id FROM im_category_hierarchy))
+                    ORDER BY category
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2)
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+// SERVICIO PARA OBTENER LOS CATALOS DE NIVEL RAIZ (son padrees mas no hijos)
+
+const getAllCatalog = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const { page, size } = req.query;
+        const query = `
+                    select 
+                    category_id, category, category_description,
+                    aux_int1 as hours, 
+                    aux_int2 as lead_time,
+                    aux_string1 as downtime, 
+                    aux_string2 as service_type 
+                    from im_categories 
+                    where category_type = 'Intranet Service Catalog' 
+                    and enabled_p = 't' 
                     ORDER BY category
                     LIMIT $2
                     OFFSET (($1 - 1) * $2)
@@ -604,7 +672,9 @@ module.exports = {
     create_service,
     getTechSystem,
     getRootCatalog,
-    getParentCatalog
+    getParentCatalog,
+    getChildCatalog,
+    getAllCatalog
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 
