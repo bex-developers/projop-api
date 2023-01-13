@@ -127,7 +127,7 @@ app.get('/tech_system/:company_id', getTechSystem);
 app.get('/root_catalog', getRootCatalog);
 app.get('/parent_catalog/:parent_id', getParentCatalog);
 app.get('/child_catalog/:parent_id', getChildCatalog);
-app.get('/all_catalog/:parent_id', getAllCatalog);
+app.get('/all_catalog/', getAllCatalog);
 
 
 //app.get('/tickets/:company_id/:fecha_inicial/:fecha_final', getTickets);
