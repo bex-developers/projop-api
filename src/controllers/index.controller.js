@@ -377,7 +377,6 @@ const getServiceCatalog = async (req, res, next) => {
                                             from im_categories 
                                             where category_type = 'Intranet Service Catalog' 
                                             and enabled_p = 't' 
-                                            and aux_int1 is not null
                                             and category_id= ${category_id} `);                                     
         res.status(200).json(response.rows);
         
