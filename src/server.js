@@ -121,7 +121,7 @@ app.post('/tickets/create_ticket', create_ticket);
 app.get('/tickets/:company_id', getTicketsAll);
 app.get('/service_catalog', getCatalog);
 app.get('/service_catalogpage', getCatalogPage);
-app.get('/service_catalog/:category_id', getServiceCatalog);
+app.get('/service-catalog/:category_id', getServiceCatalog);
 app.post('/service_catalog/create_service', create_service);
 app.get('/tech_system/:company_id', getTechSystem);
 app.get('/root_catalog', getRootCatalog);

@@ -515,7 +515,7 @@ const getServiceCatalog = async (req, res, next) => {
     try{
         //paginacion
         const client = await pool.connect(); // creates connection
-        const category_id   = req.params.company_id;
+        const category_id   = req.params.category_id;
         const { page, size } = req.query;
         const query = `
                     
