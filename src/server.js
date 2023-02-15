@@ -124,9 +124,9 @@ app.get('/service_catalogpage', getCatalogPage);
 app.get('/service-catalog/:category_id', getServiceCatalog);
 app.post('/service_catalog/create_service', create_service);
 app.get('/tech_system/:company_id', getTechSystem);
-app.get('/root_catalog', getRootCatalog);
-app.get('/parent_catalog/:parent_id', getParentCatalog);
-app.get('/child_catalog/:parent_id', getChildCatalog);
+app.get('/root-catalog', getRootCatalog);
+app.get('/parent-catalog/:parent_id', getParentCatalog);
+app.get('/child-catalog/:parent_id', getChildCatalog);
 app.get('/all_catalog/', getAllCatalog);
 
 

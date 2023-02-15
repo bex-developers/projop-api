@@ -553,11 +553,13 @@ const getRootCatalog = async (req, res, next) => {
         const { page, size } = req.query;
         const query = `
                     select 
-                    category_id, category, category_description,
+                    category_id,
+                    category,
+                    aux_string2 as category_detail,
+                    category_description,
                     aux_int1 as hours, 
                     aux_int2 as lead_time,
-                    aux_string1 as downtime, 
-                    aux_string2 as service_type 
+                    aux_string1 as downtime
                     from im_categories 
                     where category_type = 'Intranet Service Catalog' 
                     and enabled_p = 't' 
@@ -588,11 +590,13 @@ const getParentCatalog = async (req, res, next) => {
         const { page, size } = req.query;
         const query = `
                     select 
-                    category_id, category, category_description,
+                    category_id,
+                    category,
+                    aux_string2 as category_detail,
+                    category_description,
                     aux_int1 as hours, 
                     aux_int2 as lead_time,
-                    aux_string1 as downtime, 
-                    aux_string2 as service_type 
+                    aux_string1 as downtime
                     from im_categories 
                     where category_type = 'Intranet Service Catalog' 
                     and enabled_p = 't' 
@@ -623,11 +627,13 @@ const getChildCatalog = async (req, res, next) => {
         const { page, size } = req.query;
         const query = `
                     select 
-                    category_id, category, category_description,
+                    category_id,
+                    category,
+                    aux_string2 as category_detail,
+                    category_description,
                     aux_int1 as hours, 
                     aux_int2 as lead_time,
-                    aux_string1 as downtime, 
-                    aux_string2 as service_type 
+                    aux_string1 as downtime
                     from im_categories 
                     where category_type = 'Intranet Service Catalog' 
                     and enabled_p = 't' 
