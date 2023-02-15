@@ -363,7 +363,7 @@ const getCatalogPage = async (req, res, next) => {
       }
 }
 
-const getServiceCatalog = async (req, res, next) => {
+/* const getServiceCatalog = async (req, res, next) => {
     try{
         // aumentar rol 
         console.log('category_id', req.params.category_id )
@@ -384,7 +384,7 @@ const getServiceCatalog = async (req, res, next) => {
     catch (err) {
         next(err);
       }
-}
+} */
 
 const create_ticket = async (req, res, next) => {
     try{   
@@ -497,6 +497,36 @@ const getTechSystem = async (req, res, next) => {
                     ORDER BY conf_item_id
                     LIMIT $2
                     OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+const getServiceCatalog = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const category_id   = req.params.company_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                        select category_id,
+                        category, category_description, 
+                        aux_int1 as hours, aux_int2 as lead_time, 
+                        aux_string1 as downtime, aux_string2 as category_detail 
+                        from im_categories 
+                        where category_type = 'Intranet Service Catalog' 
+                        and enabled_p = 't' 
+                        and category_id= ${category_id}  
 	
         `;
         try {
