@@ -526,7 +526,10 @@ const getServiceCatalog = async (req, res, next) => {
                         from im_categories 
                         where category_type = 'Intranet Service Catalog' 
                         and enabled_p = 't' 
-                        and category_id= ${category_id}  
+                        and category_id= ${category_id}
+                        ORDER BY category_id
+                        LIMIT $2
+                        OFFSET (($1 - 1) * $2);  
 	
         `;
         try {
