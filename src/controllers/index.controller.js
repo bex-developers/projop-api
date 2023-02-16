@@ -522,6 +522,7 @@ const getPse = async (req, res, next) => {
                     SELECT 
                     conf_item_id, conf_item_name, conf_item_nr,
                     conf_item_parent_id, conf_item_code,
+                    conf_item_type_id,
                     conf_item_customer_id
                     FROM im_conf_items
                     where conf_item_parent_id = ${conf_item_id}
@@ -556,6 +557,7 @@ const getCert = async (req, res, next) => {
                     conf_item_id, conf_item_name, conf_item_nr,
                     conf_item_parent_id, conf_item_code,
                     conf_item_customer_id,
+                    conf_item_type_id,
                     cert_start_date,
                     cert_end_date
                     FROM im_conf_items
