@@ -511,6 +511,74 @@ const getTechSystem = async (req, res, next) => {
       }
 }
 
+const getPse = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const conf_item_id   = req.params.conf_item_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT 
+                    conf_item_id, conf_item_name, conf_item_nr,
+                    conf_item_parent_id, conf_item_code,
+                    conf_item_customer_id
+                    FROM im_conf_items
+                    where conf_item_parent_id = ${conf_item_id}
+                    and conf_item_type_id = '10000389'
+                    and conf_item_status_id = '11700' 
+                    ORDER BY conf_item_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+const getCert = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const conf_item_id   = req.params.conf_item_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT 
+                    conf_item_id, conf_item_name, conf_item_nr,
+                    conf_item_parent_id, conf_item_code,
+                    conf_item_customer_id,
+                    cert_start_date,
+                    cert_end_date
+                    FROM im_conf_items
+                    where conf_item_parent_id = ${conf_item_id}
+                    and conf_item_type_id in (10000391,10000392)
+                    and conf_item_status_id = '11700' 
+                    ORDER BY conf_item_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
 const getServiceCatalog = async (req, res, next) => {
     try{
         //paginacion
@@ -712,7 +780,9 @@ module.exports = {
     getRootCatalog,
     getParentCatalog,
     getChildCatalog,
-    getAllCatalog
+    getAllCatalog,
+    getPse,
+    getCert
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 
