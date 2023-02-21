@@ -584,6 +584,36 @@ const getCertInstance = async (req, res, next) => {
       }
 }
 
+// Servicio para obtener los tipos de config items
+
+const getSapCategoryType = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const { page, size } = req.query;
+        const query = `
+                    
+                    select category_id, category, category_type 
+                    from im_categories 
+                    where category_type = 'Intranet SAP LMDB It Admin Role'
+                    and category_type = 'Intranet SAP BTP Service Environment'
+                    and enabled_p = 't'
+                    ORDER BY category_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2); 
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
 
 // Servicio para obtener config items que sean tipo SAP PSE (ABAP JAVA)
 
@@ -900,7 +930,8 @@ module.exports = {
     getCert,
     getBtpService,
     getCertInstance,
-    getPseKey
+    getPseKey,
+    getSapCategoryType
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 
