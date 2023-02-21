@@ -582,6 +582,7 @@ const getCertInstance = async (req, res, next) => {
 }
 
 
+// Servicio para obtener config items que sean tipo SAP PSE (ABAP JAVA)
 
 const getPse = async (req, res, next) => {
     try{
@@ -599,6 +600,43 @@ const getPse = async (req, res, next) => {
                     FROM im_conf_items
                     where conf_item_parent_id = ${conf_item_id}
                     and conf_item_type_id = '10000389'
+                    and conf_item_status_id = '11700' 
+                    ORDER BY conf_item_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+
+// Servicio para obtener config items que sean KEYSTORE y SAP PSE
+
+const getPseKey = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const conf_item_id   = req.params.conf_item_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT 
+                    conf_item_id, conf_item_name, conf_item_nr,
+                    conf_item_parent_id, conf_item_code,
+                    conf_item_type_id,
+                    conf_item_customer_id
+                    FROM im_conf_items
+                    where conf_item_parent_id = ${conf_item_id}
+                    and conf_item_type_id in (10000389,10000390)
                     and conf_item_status_id = '11700' 
                     ORDER BY conf_item_id
                     LIMIT $2
@@ -858,7 +896,8 @@ module.exports = {
     getPse,
     getCert,
     getBtpService,
-    getCertInstance
+    getCertInstance,
+    getPseKey
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 
