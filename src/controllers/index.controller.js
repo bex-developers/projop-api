@@ -511,6 +511,78 @@ const getTechSystem = async (req, res, next) => {
       }
 }
 
+// Servicio para obtener config items en este caso servicios BTP como Integration service
+
+const getBtpService = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const company_id   = req.params.company_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT 
+                    conf_item_id, conf_item_name, conf_item_nr,
+                    conf_item_version, conf_item_code,
+                    lmdb_it_admin_role, lmdb_long_sid,
+                    lmdb_type, lmdb_install_number
+                    FROM im_conf_items
+                    where conf_item_customer_id = ${company_id}
+                    and conf_item_type_id = '10000530' 
+                    ORDER BY conf_item_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+// Servicio para obtener config items que contengan certificados como Technical systemo o servicios BTP
+
+const getCertInstance = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const company_id   = req.params.company_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT 
+                    conf_item_id, conf_item_name, conf_item_nr,
+                    conf_item_version, conf_item_code,
+                    lmdb_it_admin_role, lmdb_long_sid,
+                    lmdb_type, lmdb_install_number
+                    FROM im_conf_items
+                    where conf_item_customer_id = ${company_id}
+                    and conf_item_type_id in (10000316,10000530)
+                    ORDER BY conf_item_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+
+
 const getPse = async (req, res, next) => {
     try{
         //paginacion
@@ -784,7 +856,9 @@ module.exports = {
     getChildCatalog,
     getAllCatalog,
     getPse,
-    getCert
+    getCert,
+    getBtpService,
+    getCertInstance
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 
