@@ -597,6 +597,7 @@ const getSapCategoryType = async (req, res, next) => {
                     from im_categories 
                     where category_type = 'Intranet SAP LMDB It Admin Role'
                     or category_type = 'Intranet SAP BTP Service Environment'
+                    or category_type = 'Intranet Conf Item Type'
                     and enabled_p = 't'
                     ORDER BY category_id
                     LIMIT $2
