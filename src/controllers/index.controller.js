@@ -560,8 +560,9 @@ const getCertInstance = async (req, res, next) => {
                     conf_item_id, conf_item_name, conf_item_nr,
                     conf_item_version, conf_item_code,
                     conf_item_type_id, im_category_from_id(conf_item_type_id) as conf_item_type_name,
-                    btp_srv_environment, im_category_from_id(btp_srv_environment) as btp_srv_environment_name,
-                    lmdb_it_admin_role, lmdb_long_sid,
+                    sap_btp_srv_environment, im_category_from_id(sap_btp_srv_environment) as sap_btp_srv_environment_name,
+                    sap_lmdb_it_admin_role,im_category_from_id(sap_lmdb_it_admin_role) as sap_lmdb_it_admin_role_name,
+                    lmdb_long_sid,
                     lmdb_type, lmdb_install_number
                     FROM im_conf_items
                     where conf_item_customer_id = ${company_id}
