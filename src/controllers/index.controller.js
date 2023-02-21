@@ -559,7 +559,8 @@ const getCertInstance = async (req, res, next) => {
                     SELECT 
                     conf_item_id, conf_item_name, conf_item_nr,
                     conf_item_version, conf_item_code,
-                    conf_item_type, btp_srv_environment,
+                    conf_item_type_id, im_category_from_id(conf_item_type_id),
+                    btp_srv_environment,
                     lmdb_it_admin_role, lmdb_long_sid,
                     lmdb_type, lmdb_install_number
                     FROM im_conf_items
