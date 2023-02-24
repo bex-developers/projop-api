@@ -56,7 +56,11 @@ const { getRootCatalog } = require('./controllers/index.controller');
 const { getParentCatalog } = require('./controllers/index.controller');
 const { getChildCatalog } = require('./controllers/index.controller');
 const { getAllCatalog } = require('./controllers/index.controller');
-
+const { getAllCert } = require('./controllers/index.controller');
+const { getExpiredCert } = require('./controllers/index.controller');
+const { getValidCert } = require('./controllers/index.controller');
+const { getSoonToExpireCert } = require('./controllers/index.controller');
+const { getCertKpi } = require('./controllers/index.controller');
 
 // let kcConfig = {
 //  clientId: 'projop-api',
@@ -136,6 +140,11 @@ app.get('/sap-category-type/', getSapCategoryType);
 app.get('/pse/:conf_item_id', getPse);
 app.get('/pse-key/:conf_item_id', getPseKey);
 app.get('/cert/:conf_item_id', getCert);
+app.get('/all-cert/:company_id', getAllCert);
+app.get('/expired-cert/:company_id', getExpiredCert);
+app.get('/valid-cert/:company_id', getValidCert);
+app.get('/soon-cert/:company_id', getSoonToExpireCert);
+app.get('/cert-kpi/:company_id', getCertKpi);
 app.get('/root-catalog', getRootCatalog);
 app.get('/parent-catalog/:parent_id', getParentCatalog);
 app.get('/child-catalog/:parent_id', getChildCatalog);

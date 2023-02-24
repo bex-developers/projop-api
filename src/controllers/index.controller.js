@@ -725,6 +725,186 @@ const getCert = async (req, res, next) => {
       }
 }
 
+const getAllCert = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const company_id   = req.params.company_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT 
+                    conf_item_id, conf_item_name, conf_item_nr,
+                    conf_item_parent_id, acs_object__name(conf_item_parent_id) as conf_item_parent_name,
+                    conf_item_code,
+                    conf_item_customer_id,
+                    conf_item_type_id,
+                    cert_start_date,
+                    cert_end_date
+                    FROM im_conf_items
+                    where conf_item_customer_id = ${company_id}
+                    and conf_item_type_id in (10000391,10000392)
+                    and conf_item_status_id = '11700' 
+                    ORDER BY conf_item_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+const getExpiredCert = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const company_id   = req.params.company_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT 
+                    conf_item_id, conf_item_name, conf_item_nr,
+                    conf_item_parent_id, acs_object__name(conf_item_parent_id) as conf_item_parent_name,
+                    conf_item_code,
+                    conf_item_customer_id,
+                    conf_item_type_id,
+                    cert_start_date,
+                    cert_end_date
+                    FROM im_conf_items
+                    where conf_item_customer_id = ${company_id}
+                    and conf_item_type_id in (10000391,10000392)
+                    and conf_item_status_id = '11700' 
+                    and cert_end_date <= CURRENT_DATE;
+                    ORDER BY conf_item_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+const getValidCert = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const company_id   = req.params.company_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT 
+                    conf_item_id, conf_item_name, conf_item_nr,
+                    conf_item_parent_id, acs_object__name(conf_item_parent_id) as conf_item_parent_name,
+                    conf_item_code,
+                    conf_item_customer_id,
+                    conf_item_type_id,
+                    cert_start_date,
+                    cert_end_date
+                    FROM im_conf_items
+                    where conf_item_customer_id = ${company_id}
+                    and conf_item_type_id in (10000391,10000392)
+                    and conf_item_status_id = '11700' 
+                    and cert_end_date >= CURRENT_DATE + interval '30 days';
+                    ORDER BY conf_item_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+const getSoonToExpireCert = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const company_id   = req.params.company_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT 
+                    conf_item_id, conf_item_name, conf_item_nr,
+                    conf_item_parent_id, acs_object__name(conf_item_parent_id) as conf_item_parent_name,
+                    conf_item_code,
+                    conf_item_customer_id,
+                    conf_item_type_id,
+                    cert_start_date,
+                    cert_end_date
+                    FROM im_conf_items
+                    where conf_item_customer_id = ${company_id}
+                    and conf_item_type_id in (10000391,10000392)
+                    and conf_item_status_id = '11700' 
+                    and cert_end_date > current_date AND cert_end_date < current_date + interval '30 days';
+                    ORDER BY conf_item_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+const getCertKpi = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const company_id   = req.params.company_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT
+                    (SELECT COUNT(*) FROM im_conf_items WHERE conf_item_type_id IN (10000391, 10000392) AND conf_item_customer_id = ${company_id} AND conf_item_status_id = '11700') AS total_cert,
+                    (SELECT COUNT(*) FROM im_conf_items WHERE conf_item_type_id IN (10000391, 10000392) AND conf_item_customer_id = ${company_id} AND conf_item_status_id = '11700' AND cert_end_date >= CURRENT_DATE) AS valid_cert,
+                    (SELECT COUNT(*) FROM im_conf_items WHERE conf_item_type_id IN (10000391, 10000392) AND conf_item_customer_id = ${company_id} AND conf_item_status_id = '11700' AND cert_end_date <= CURRENT_DATE) AS expired_cert,
+                    (SELECT COUNT(*) FROM im_conf_items WHERE conf_item_type_id IN (10000391, 10000392) AND conf_item_customer_id = ${company_id} AND conf_item_status_id = '11700' AND cert_end_date > current_date AND cert_end_date < current_date + interval '30 days') AS soontoexpire_cert     
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
 const getServiceCatalog = async (req, res, next) => {
     try{
         //paginacion
@@ -932,7 +1112,12 @@ module.exports = {
     getBtpService,
     getCertInstance,
     getPseKey,
-    getSapCategoryType
+    getSapCategoryType,
+    getAllCert,
+    getExpiredCert,
+    getValidCert,
+    getSoonToExpireCert,
+    getCertKpi
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 
