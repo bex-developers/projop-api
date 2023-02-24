@@ -782,7 +782,7 @@ const getExpiredCert = async (req, res, next) => {
                     where conf_item_customer_id = ${company_id}
                     and conf_item_type_id in (10000391,10000392)
                     and conf_item_status_id = '11700' 
-                    and cert_end_date <= CURRENT_DATE;
+                    and cert_end_date <= CURRENT_DATE
                     ORDER BY conf_item_id
                     LIMIT $2
                     OFFSET (($1 - 1) * $2);
@@ -820,7 +820,7 @@ const getValidCert = async (req, res, next) => {
                     where conf_item_customer_id = ${company_id}
                     and conf_item_type_id in (10000391,10000392)
                     and conf_item_status_id = '11700' 
-                    and cert_end_date >= CURRENT_DATE + interval '30 days';
+                    and cert_end_date >= CURRENT_DATE + interval '30 days'
                     ORDER BY conf_item_id
                     LIMIT $2
                     OFFSET (($1 - 1) * $2);
@@ -858,7 +858,7 @@ const getSoonToExpireCert = async (req, res, next) => {
                     where conf_item_customer_id = ${company_id}
                     and conf_item_type_id in (10000391,10000392)
                     and conf_item_status_id = '11700' 
-                    and cert_end_date > current_date AND cert_end_date < current_date + interval '30 days';
+                    and cert_end_date > current_date AND cert_end_date < current_date + interval '30 days'
                     ORDER BY conf_item_id
                     LIMIT $2
                     OFFSET (($1 - 1) * $2);
