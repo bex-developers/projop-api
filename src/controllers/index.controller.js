@@ -746,6 +746,7 @@ const getAllCert = async (req, res, next) => {
                     conf_item_type_id,
                     cert_start_date,
                     cert_end_date,
+                    CASE
                         WHEN CURRENT_DATE < cert_end_date - interval '30 days' THEN 'valid'
       					WHEN cert_end_date <= CURRENT_DATE THEN 'expired'
       					WHEN cert_end_date > current_date AND current_date > cert_end_date - interval '30 days' THEN 'soon_to_expire'
