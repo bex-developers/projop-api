@@ -830,7 +830,7 @@ const getValidCert = async (req, res, next) => {
                     where conf_item_customer_id = ${company_id}
                     and conf_item_type_id in (10000391,10000392)
                     and conf_item_status_id = '11700' 
-                    and cert_end_date > CURRENT_DATE - interval '30 days'
+                    and CURRENT_DATE < cert_end_date - interval '30 days'
                     ORDER BY conf_item_id
                     LIMIT $2
                     OFFSET (($1 - 1) * $2);
@@ -868,7 +868,7 @@ const getSoonToExpireCert = async (req, res, next) => {
                     where conf_item_customer_id = ${company_id}
                     and conf_item_type_id in (10000391,10000392)
                     and conf_item_status_id = '11700' 
-                    and cert_end_date > current_date AND cert_end_date < current_date + interval '30 days'
+                    and cert_end_date > current_date AND current_date > cert_end_date - interval '30 days'
                     ORDER BY conf_item_id
                     LIMIT $2
                     OFFSET (($1 - 1) * $2);
@@ -896,9 +896,9 @@ const getCertKpi = async (req, res, next) => {
                     
                     SELECT
                     (SELECT COUNT(*) FROM im_conf_items WHERE conf_item_type_id IN (10000391, 10000392) AND conf_item_customer_id = ${company_id} AND conf_item_status_id = '11700') AS total_cert,
-                    (SELECT COUNT(*) FROM im_conf_items WHERE conf_item_type_id IN (10000391, 10000392) AND conf_item_customer_id = ${company_id} AND conf_item_status_id = '11700' AND cert_end_date > CURRENT_DATE - interval '30 days') AS valid_cert,
+                    (SELECT COUNT(*) FROM im_conf_items WHERE conf_item_type_id IN (10000391, 10000392) AND conf_item_customer_id = ${company_id} AND conf_item_status_id = '11700' AND CURRENT_DATE < cert_end_date - interval '30 days' ) AS valid_cert,
                     (SELECT COUNT(*) FROM im_conf_items WHERE conf_item_type_id IN (10000391, 10000392) AND conf_item_customer_id = ${company_id} AND conf_item_status_id = '11700' AND cert_end_date <= CURRENT_DATE) AS expired_cert,
-                    (SELECT COUNT(*) FROM im_conf_items WHERE conf_item_type_id IN (10000391, 10000392) AND conf_item_customer_id = ${company_id} AND conf_item_status_id = '11700' AND cert_end_date > current_date AND cert_end_date < current_date + interval '30 days') AS soontoexpire_cert     
+                    (SELECT COUNT(*) FROM im_conf_items WHERE conf_item_type_id IN (10000391, 10000392) AND conf_item_customer_id = ${company_id} AND conf_item_status_id = '11700' AND cert_end_date > current_date AND current_date > cert_end_date - interval '30 days') AS soontoexpire_cert     
                     LIMIT $2
                     OFFSET (($1 - 1) * $2);
 	
