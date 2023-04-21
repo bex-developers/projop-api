@@ -730,6 +730,47 @@ const getCert = async (req, res, next) => {
       }
 }
 
+const getSingleCert = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const conf_item_id   = req.params.conf_item_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                    SELECT 
+                    conf_item_id, conf_item_name, conf_item_nr,
+                    conf_item_parent_id, conf_item_code,
+                    conf_item_customer_id,
+                    conf_item_type_id,
+                    cert_start_date,
+                    cert_end_date,
+					CASE 
+      					WHEN cert_end_date > CURRENT_DATE - interval '30 days' THEN 'valid'
+      					WHEN cert_end_date <= CURRENT_DATE THEN 'expired'
+      					WHEN cert_end_date > current_date AND cert_end_date < current_date + interval '30 days' THEN 'soon_to_expire'
+					END as cert_status
+                    FROM im_conf_items
+                    where conf_item_id = ${conf_item_id}
+                    and conf_item_type_id in (10000391,10000392)
+                    and conf_item_status_id = '11700' 
+                    ORDER BY conf_item_id
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2);
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
 const getAllCert = async (req, res, next) => {
     try{
         //paginacion
@@ -1119,6 +1160,7 @@ module.exports = {
     getAllCatalog,
     getPse,
     getCert,
+    getSingleCert,
     getBtpService,
     getCertInstance,
     getPseKey,
