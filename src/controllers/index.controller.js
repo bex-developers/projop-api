@@ -164,6 +164,56 @@ const getTicketsHelpDesk = async (req, res, next) => {
         next(err);
       }
 }
+
+// SERVICIO PARA OBTENER los tickets asignados a un usuario a traves de su correo electronico
+
+const getOpenTicketsEmail = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const user_email = req.params.user_email;
+        const { page, size } = req.query;
+        const query = `
+                    select p.project_nr as NR, p.project_name as Nombre, 
+                    im_category_from_id(t.ticket_status_id) as STATUS, 
+                    im_category_from_id(t.ticket_type_id) as TYPE, 
+                    im_category_from_id(t.ticket_prio_id) as PRIO, 
+                    acs_object__name(t.ticket_customer_contact_id) as CONTACT_NAME, 
+                    acs_object__name(t.ticket_assignee_id) as ASSIGNEE, 
+                    acs_object__name(t.ticket_conf_item_id) as CONF_ITEM, 
+                    t.ticket_creation_date as CREATION_DATE, 
+                    t.ticket_done_date as DONE_DATE, t.ticket_irt as IRT, 
+                    t.ticket_mpt as MPT, 
+                    t.ticket_solution as TICKET_SOLUTION, 
+                    t.ticket_quoted_hours as QUOTED_HOURS, 
+                    im_category_from_id(t.ticket_customer_project) as CUSTOMER_PROJECT, 
+                    im_category_from_id(t.ticket_service_catalog) as SERVICE_CATALOG, 
+                    im_category_from_id(t.ticket_customer_company) as CUSTOMER_COMPANY, 
+                    im_category_from_id(t.ticket_custom_class) as CUSTOM_CLASS, 
+                    im_category_from_id(t.ticket_solution_category) as SOLUTION_CATEGORY, 
+                    to_char(p.reported_hours_cache, '999D9') as REPORTED_HOURS 
+                    from im_tickets t, im_projects p, acs_objects o 
+                    where t.ticket_id = p.project_id 
+                    and t.ticket_id = o.object_id 
+                    and p.company_id is distinct from 8720
+                    and t.ticket_status_id not in (30096,30001)
+                    and t.ticket_assignee_id = (SELECT u.user_id AS user_id FROM  users u, im_employees e where u.user_id = e.employee_id and u.username = ${user_email})
+                    order by t.ticket_creation_date
+                    LIMIT $2
+                    OFFSET (($1 - 1) * $2)
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
 const getCompanyInfo = async (req, res, next) => {
     try{
         const  company_id   = req.params.company_id;
@@ -1136,6 +1186,7 @@ module.exports = {
     getTickets,
     getTicketsAdmin,
     getTicketsHelpDesk,
+    getOpenTicketsEmail,
     types,
     priority,
     catalog,

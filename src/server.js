@@ -28,6 +28,7 @@ const memoryStore = new session.MemoryStore();
 const { getTickets } = require('./controllers/index.controller');
 const { getTicketsAdmin } = require('./controllers/index.controller');
 const { getTicketsHelpDesk } = require('./controllers/index.controller');
+const { getOpenTicketsEmail } = require('./controllers/index.controller');
 const { getCompanyInfo } = require('./controllers/index.controller');
 const { types } = require('./controllers/index.controller');
 const { priority } = require('./controllers/index.controller');
@@ -117,6 +118,7 @@ app.use(keycloak.middleware({
 app.get('/tickets/:company_id/:fecha_inicial/:fecha_final', getTickets);
 app.get('/ticketsAdmin/:fecha_inicial/:fecha_final', getTicketsAdmin);
 app.get('/ticketsHelpDesk/:person_id/:fecha_inicial/:fecha_final', getTicketsHelpDesk);
+app.get('/open-tickets/:user_email', getOpenTicketsEmail);
 app.get('/tickets/company_info/:company_id', getCompanyInfo);
 app.get('/tickets/types', types);
 app.get('/tickets/priority', priority);
