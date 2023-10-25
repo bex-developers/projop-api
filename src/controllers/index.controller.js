@@ -174,7 +174,9 @@ const getOpenTicketsEmail = async (req, res, next) => {
         const user_email = req.params.user_email;
         const { page, size } = req.query;
         const query = `
-                    select p.project_nr as NR, p.project_name as Nombre, 
+                    select p.project_nr as NR,
+                    t.ticket_id as TICKET_ID,
+                    p.project_name as Nombre, 
                     im_category_from_id(t.ticket_status_id) as STATUS, 
                     im_category_from_id(t.ticket_type_id) as TYPE, 
                     im_category_from_id(t.ticket_prio_id) as PRIO, 
@@ -489,6 +491,21 @@ const create_ticket = async (req, res, next) => {
                                             ${p_ticket_customer_contact_id},
                                             '${p_ticket_customer_deadline}',
                                             ${p_ticket_solution_category})`);                                     
+        res.status(200).json(response.rows);
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+// Servicio para update ticket:
+
+const update_ticket = async (req, res, next) => {
+    try{
+         const  ticket_id   = req.params.ticket_id;
+         const  ticket_status_id   = req.params.ticket_status_id;
+         
+        const response = await pool.query(`UPDATE im_tickets SET  ticket_status_id =${ticket_status_id} WHERE ticket_id = ${ticket_id} `);                                     
         res.status(200).json(response.rows);
     }
     catch (err) {
@@ -1220,7 +1237,8 @@ module.exports = {
     getExpiredCert,
     getValidCert,
     getSoonToExpireCert,
-    getCertKpi
+    getCertKpi,
+    update_ticket
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 

@@ -63,6 +63,7 @@ const { getExpiredCert } = require('./controllers/index.controller');
 const { getValidCert } = require('./controllers/index.controller');
 const { getSoonToExpireCert } = require('./controllers/index.controller');
 const { getCertKpi } = require('./controllers/index.controller');
+const { update_ticket } = require('./controllers/index.controller');
 
 // let kcConfig = {
 //  clientId: 'projop-api',
@@ -153,6 +154,7 @@ app.get('/root-catalog', getRootCatalog);
 app.get('/parent-catalog/:parent_id', getParentCatalog);
 app.get('/child-catalog/:parent_id', getChildCatalog);
 app.get('/all_catalog/', getAllCatalog);
+app.put('/update_ticket/:ticket_id/:ticket_status_id', update_ticket);
 
 
 //app.get('/tickets/:company_id/:fecha_inicial/:fecha_final', getTickets);
