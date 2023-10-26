@@ -504,8 +504,14 @@ const update_ticket = async (req, res, next) => {
     try{
          const  ticket_id   = req.params.ticket_id;
          const  ticket_status_id   = req.params.ticket_status_id;
+         const  ticket_quoted_hours   = req.params.ticket_quoted_hours;
+         const  ticket_solution   = req.params.ticket_solution;
          
-        const response = await pool.query(`UPDATE im_tickets SET  ticket_status_id =${ticket_status_id} WHERE ticket_id = ${ticket_id} `);                                     
+        const response = await pool.query(`UPDATE im_tickets SET
+        ticket_status_id =${ticket_status_id},
+        ticket_quoted_hours	 =${ticket_quoted_hours},
+        ticket_solution	 =${ticket_solution	} 
+        WHERE ticket_id = ${ticket_id} `);                                     
         res.status(200).json(response.rows);
     }
     catch (err) {
