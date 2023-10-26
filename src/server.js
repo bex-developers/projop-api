@@ -64,6 +64,8 @@ const { getValidCert } = require('./controllers/index.controller');
 const { getSoonToExpireCert } = require('./controllers/index.controller');
 const { getCertKpi } = require('./controllers/index.controller');
 const { update_ticket } = require('./controllers/index.controller');
+const { getTicket } = require('./controllers/index.controller');
+
 
 // let kcConfig = {
 //  clientId: 'projop-api',
@@ -155,7 +157,36 @@ app.get('/parent-catalog/:parent_id', getParentCatalog);
 app.get('/child-catalog/:parent_id', getChildCatalog);
 app.get('/all_catalog/', getAllCatalog);
 app.put('/update_ticket/:ticket_id/:ticket_status_id', update_ticket);
+app.get('/v1/tickets/:ticket_id', getTicket);
 
+// NAMING CONVENTIONS
+//Use Nouns to represent resources / Not Verbs
+//http://api.example.com/v1/store/items/{item-id}✅
+// Use Pluralized Nouns for resources
+//http://api.example.com/v1/store/items/{item-id}✅
+//Use hyphens (-) to improve the readability of URIs
+//http://api.example.com/v1/store/item-management/{item-id}/product-type
+//Use forward slashes (/) for hierarchy but not trailing forward slash (/)
+//http://api.example.com/v1/store/items✅
+//Avoid using file extensions
+//http://api.example.com/v1/store/items✅
+//Use query component to filter URI collection
+//http://api.example.com/v1/store/items?group=124
+//http://api.example.com/v1/store/employees?department=IT&region=USA
+
+/* Examples:
+GET — Read employee with employee id 8345
+
+example.com/employees/8345
+POST— Create an employee
+
+example.com/employees
+PUT— Update employee with employee id 8345
+
+example.com/employees/8345
+DELETE — Delete employee with employee id 8345
+
+example.com/employees/8345 */
 
 //app.get('/tickets/:company_id/:fecha_inicial/:fecha_final', getTickets);
 

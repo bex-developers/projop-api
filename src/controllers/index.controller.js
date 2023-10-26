@@ -543,6 +543,58 @@ const create_service = async (req, res, next) => {
       }
 }
 
+
+//SERVICIO PARA TRAER LA INFORMACION DE UN TICKET INDIVIDUAL
+
+const getTicket = async (req, res, next) => {
+    try{
+        //paginacion
+        const client = await pool.connect(); // creates connection
+        const ticket_id   = req.params.ticket_id;
+        const { page, size } = req.query;
+        const query = `
+                    
+                select p.project_nr as NR,
+                t.ticket_id as TICKET_ID,
+                p.project_name as Nombre, 
+                im_category_from_id(t.ticket_status_id) as STATUS, 
+                im_category_from_id(t.ticket_type_id) as TYPE, 
+                im_category_from_id(t.ticket_prio_id) as PRIO, 
+                acs_object__name(t.ticket_customer_contact_id) as CONTACT_NAME, 
+                acs_object__name(t.ticket_assignee_id) as ASSIGNEE, 
+                acs_object__name(t.ticket_conf_item_id) as CONF_ITEM, 
+                t.ticket_creation_date as CREATION_DATE, 
+                t.ticket_done_date as DONE_DATE, t.ticket_irt as IRT, 
+                t.ticket_mpt as MPT, 
+                t.ticket_solution as TICKET_SOLUTION, 
+                t.ticket_quoted_hours as QUOTED_HOURS, 
+                im_category_from_id(t.ticket_customer_project) as CUSTOMER_PROJECT, 
+                im_category_from_id(t.ticket_service_catalog) as SERVICE_CATALOG, 
+                im_category_from_id(t.ticket_customer_company) as CUSTOMER_COMPANY, 
+                im_category_from_id(t.ticket_custom_class) as CUSTOM_CLASS, 
+                im_category_from_id(t.ticket_solution_category) as SOLUTION_CATEGORY, 
+                to_char(p.reported_hours_cache, '999D9') as REPORTED_HOURS 
+                from im_tickets t, im_projects p, acs_objects o 
+                where t.ticket_id = ${ticket_id}
+                and t.ticket_id = p.project_id 
+                and t.ticket_id = o.object_id 
+                LIMIT $2
+                OFFSET (($1 - 1) * $2)
+	
+        `;
+        try {
+            const { rows } = await client.query(query, [page, size]); // sends query
+            res.status(200).json(rows);
+        } finally {
+            await client.release(); // releases connection
+        }
+    }
+    catch (err) {
+        next(err);
+      }
+}
+
+
 // Servicio para obtener config items:
 
 const getTechSystem = async (req, res, next) => {
@@ -1238,7 +1290,8 @@ module.exports = {
     getValidCert,
     getSoonToExpireCert,
     getCertKpi,
-    update_ticket
+    update_ticket,
+    getTicket
 };
 /*
 ticket_prio_id,ticket_id, ticket_customer_project, ticket_customer_contact_id 
