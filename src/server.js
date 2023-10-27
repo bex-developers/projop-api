@@ -156,7 +156,7 @@ app.get('/root-catalog', getRootCatalog);
 app.get('/parent-catalog/:parent_id', getParentCatalog);
 app.get('/child-catalog/:parent_id', getChildCatalog);
 app.get('/all_catalog/', getAllCatalog);
-app.put('/update_ticket/:ticket_id/:ticket_status_id/:ticket_quoted_hours/:ticket_solution', update_ticket);
+app.put('/update_ticket/:ticket_id', update_ticket);
 app.get('/v1/tickets/:ticket_id', getTicket);
 
 // NAMING CONVENTIONS

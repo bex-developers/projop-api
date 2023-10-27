@@ -503,14 +503,18 @@ const create_ticket = async (req, res, next) => {
 const update_ticket = async (req, res, next) => {
     try{
          const  ticket_id   = req.params.ticket_id;
-         const  ticket_status_id   = req.params.ticket_status_id;
-         const  ticket_quoted_hours   = req.params.ticket_quoted_hours;
-         const  ticket_solution   = req.params.ticket_solution;
-         
+         const  ticket_status_id   = req.body.ticket_status_id;
+         const  ticket_quoted_hours   = req.body.ticket_quoted_hours;
+         const  ticket_solution   = req.body.ticket_solution;
+
+//const  ticket_solution = req.body.ticket_solution.tostring();
+         console.log('cuerpo', req.body) 
+
         const response = await pool.query(`UPDATE im_tickets SET
         ticket_status_id =${ticket_status_id},
         ticket_quoted_hours	 =${ticket_quoted_hours},
-        ticket_solution	 =${ticket_solution	} 
+        ticket_solution	 ='${ticket_solution}'
+        
         WHERE ticket_id = ${ticket_id} `);                                     
         res.status(200).json(response.rows);
     }
