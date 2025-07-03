@@ -2,16 +2,22 @@
   "name": "projop-api",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js"
+    "test": "node src/server.js",
+    "start": "node src/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.17.1",
-    "pg": "^8.5.1"
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.2",
+    "express": "^4.17.3",
+    "express-session": "^1.17.2",
+    "jsonwebtoken": "^8.5.1",
+    "keycloak-connect": "^15.1.1",
+    "pg": "^8.7.3",
+    "postgres-date": "^2.0.1"
   }
 }
