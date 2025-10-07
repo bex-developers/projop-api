@@ -268,65 +268,144 @@ const getTicket = async (req, res, next) => {
       }
 }
 
-const create_ticket = async (req, res, next) => {
-    try{   
-    var p_ticket_id           = req.body.p_ticket_id;
-    var p_object_type         = req.body.p_object_type;//"'im_ticket'";//
-    var p_creation_date       = 'now()';//req.body.p_creation_date;
-    var p_creation_user       = req.body.p_creation_user;
-    var p_creation_ip         = req.body.p_creation_ip;
-    var p_context_id          = req.body.p_context_id;
-    var p_ticket_name         = req.body.p_ticket_name;
-    var p_ticket_customer_id  = req.body.p_ticket_customer_id;
-    var p_ticket_type_id      = req.body.p_ticket_type_id;
-    var p_ticket_status_id    = req.body.p_ticket_status_id;
+// const create_ticket = async (req, res, next) => {
+//     try{   
+//     var p_ticket_id           = req.body.p_ticket_id;
+//     var p_object_type         = req.body.p_object_type;//"'im_ticket'";//
+//     var p_creation_date       = 'now()';//req.body.p_creation_date;
+//     var p_creation_user       = req.body.p_creation_user;
+//     var p_creation_ip         = req.body.p_creation_ip;
+//     var p_context_id          = req.body.p_context_id;
+//     var p_ticket_name         = req.body.p_ticket_name;
+//     var p_ticket_customer_id  = req.body.p_ticket_customer_id;
+//     var p_ticket_type_id      = req.body.p_ticket_type_id;
+//     var p_ticket_status_id    = req.body.p_ticket_status_id;
 
-    var p_ticket_prio_id             = req.body.p_ticket_prio_id;
-    var p_parent_id                  = req.body.p_parent_id;
-    var p_ticket_description         = req.body.p_ticket_description;
-    var p_ticket_service_catalog     = req.body.p_ticket_service_catalog;
-    var p_ticket_customer_company    = req.body.p_ticket_customer_company;
-    var p_ticket_customer_project    = req.body.p_ticket_customer_project;
-    var p_ticket_custom_class        = req.body.p_ticket_custom_class;
-    var p_ticket_conf_item_id        = req.body.p_ticket_conf_item_id ;
-    var p_ticket_customer_contact_id = req.body.p_ticket_customer_contact_id;
-    var p_ticket_customer_deadline   = req.body.p_ticket_customer_deadline ;
+//     var p_ticket_prio_id             = req.body.p_ticket_prio_id;
+//     var p_parent_id                  = req.body.p_parent_id;
+//     var p_ticket_description         = req.body.p_ticket_description;
+//     var p_ticket_service_catalog     = req.body.p_ticket_service_catalog;
+//     var p_ticket_customer_company    = req.body.p_ticket_customer_company;
+//     var p_ticket_customer_project    = req.body.p_ticket_customer_project;
+//     var p_ticket_custom_class        = req.body.p_ticket_custom_class;
+//     var p_ticket_conf_item_id        = req.body.p_ticket_conf_item_id ;
+//     var p_ticket_customer_contact_id = req.body.p_ticket_customer_contact_id;
+//     var p_ticket_customer_deadline   = req.body.p_ticket_customer_deadline ;
  
-    if(req.body.p_ticket_customer_deadline === ""){
-        p_ticket_customer_deadline = "1900-01-01";
-    }
+//     if(req.body.p_ticket_customer_deadline === ""){
+//         p_ticket_customer_deadline = "1900-01-01";
+//     }
     
-    var p_ticket_solution_category   = req.body.p_ticket_solution_category ;
-    console.log('cuerpo', req.body)
+//     var p_ticket_solution_category   = req.body.p_ticket_solution_category ;
+//     console.log('cuerpo', req.body)
          
-      const response = await pool.query(`SELECT public.im_ticket__new__api(
-                                            ${p_ticket_id}, 
-                                            '${p_object_type}', 
-                                            ${p_creation_date},                    
-                                            ${p_creation_user},  
-                                            ${p_creation_ip},  
-                                            ${p_context_id},  
-                                            '${p_ticket_name}',  
-                                            ${p_ticket_customer_id},  
-                                            ${p_ticket_type_id},  
-                                            ${p_ticket_status_id},
-                                            ${p_ticket_prio_id},
-                                            ${p_parent_id},
-                                            '${p_ticket_description}',
-                                            ${p_ticket_service_catalog},
-                                            ${p_ticket_customer_company},
-                                            ${p_ticket_customer_project},
-                                            ${p_ticket_custom_class},
-                                            ${p_ticket_conf_item_id},
-                                            ${p_ticket_customer_contact_id},
-                                            '${p_ticket_customer_deadline}',
-                                            ${p_ticket_solution_category})`);                                     
+//       const response = await pool.query(`SELECT public.im_ticket__new__api(
+//                                             ${p_ticket_id}, 
+//                                             '${p_object_type}', 
+//                                             ${p_creation_date},                    
+//                                             ${p_creation_user},  
+//                                             ${p_creation_ip},  
+//                                             ${p_context_id},  
+//                                             '${p_ticket_name}',  
+//                                             ${p_ticket_customer_id},  
+//                                             ${p_ticket_type_id},  
+//                                             ${p_ticket_status_id},
+//                                             ${p_ticket_prio_id},
+//                                             ${p_parent_id},
+//                                             '${p_ticket_description}',
+//                                             ${p_ticket_service_catalog},
+//                                             ${p_ticket_customer_company},
+//                                             ${p_ticket_customer_project},
+//                                             ${p_ticket_custom_class},
+//                                             ${p_ticket_conf_item_id},
+//                                             ${p_ticket_customer_contact_id},
+//                                             '${p_ticket_customer_deadline}',
+//                                             ${p_ticket_solution_category})`);                                     
+//         res.status(200).json(response.rows);
+//     }
+//     catch (err) {
+//         next(err);
+//       }
+// }
+const create_ticket = async (req, res, next) => {
+    try {   
+        // 🔹 Parámetros existentes
+        var p_ticket_id                = req.body.p_ticket_id;
+        var p_object_type              = req.body.p_object_type;
+        var p_creation_date            = 'now()';
+        var p_creation_user            = req.body.p_creation_user;
+        var p_creation_ip              = req.body.p_creation_ip;
+        var p_context_id               = req.body.p_context_id;
+        var p_ticket_name              = req.body.p_ticket_name;
+        var p_ticket_customer_id       = req.body.p_ticket_customer_id;
+        var p_ticket_type_id           = req.body.p_ticket_type_id;
+        var p_ticket_status_id         = req.body.p_ticket_status_id;
+        var p_ticket_prio_id           = req.body.p_ticket_prio_id;
+        var p_parent_id                = req.body.p_parent_id;
+        var p_ticket_description       = req.body.p_ticket_description;
+        var p_ticket_service_catalog   = req.body.p_ticket_service_catalog;
+        var p_ticket_customer_company  = req.body.p_ticket_customer_company;
+        var p_ticket_customer_project  = req.body.p_ticket_customer_project;
+        var p_ticket_custom_class      = req.body.p_ticket_custom_class;
+        var p_ticket_conf_item_id      = req.body.p_ticket_conf_item_id;
+        var p_ticket_customer_contact_id = req.body.p_ticket_customer_contact_id;
+        var p_ticket_customer_deadline   = req.body.p_ticket_customer_deadline;
+        var p_ticket_solution_category   = req.body.p_ticket_solution_category;
+
+        // 🔸 Validación de fecha vacía
+        if (req.body.p_ticket_customer_deadline === "") {
+            p_ticket_customer_deadline = "1900-01-01";
+        }
+
+        // 🔹 Nuevos parámetros
+        var p_ticket_assignee_id               = req.body.p_ticket_assignee_id;
+        var p_ticket_service_catalog_new       = req.body.p_ticket_service_catalog_new;
+        var p_bex_ticket_overtime              = req.body.p_bex_ticket_overtime;
+        var p_bex_ticket_downtime_hours        = req.body.p_bex_ticket_downtime_hours;
+        var p_bex_ticket_customer_initial_date = req.body.p_bex_ticket_customer_initial_date;
+        var p_ticket_config_item_new           = req.body.p_ticket_config_item_new;
+
+        console.log('Cuerpo recibido:', req.body);
+
+        // 🔹 Ejecutar la función PL/pgSQL TEST
+        const response = await pool.query(`
+            SELECT public.im_ticket__new__api_test(
+                ${p_ticket_id}, 
+                '${p_object_type}', 
+                ${p_creation_date},                    
+                ${p_creation_user},  
+                ${p_creation_ip},  
+                ${p_context_id},  
+                '${p_ticket_name}',  
+                ${p_ticket_customer_id},  
+                ${p_ticket_type_id},  
+                ${p_ticket_status_id},
+                ${p_ticket_prio_id},
+                ${p_parent_id},
+                '${p_ticket_description}',
+                ${p_ticket_service_catalog},
+                ${p_ticket_customer_company},
+                ${p_ticket_customer_project},
+                ${p_ticket_custom_class},
+                ${p_ticket_conf_item_id},
+                ${p_ticket_customer_contact_id},
+                '${p_ticket_customer_deadline}',
+                ${p_ticket_solution_category},
+                ${p_ticket_assignee_id},
+                ${p_ticket_service_catalog_new},
+                '${p_bex_ticket_overtime}',
+                ${p_bex_ticket_downtime_hours},
+                '${p_bex_ticket_customer_initial_date}',
+                ${p_ticket_config_item_new}
+            );
+        `);
+
         res.status(200).json(response.rows);
-    }
+    } 
     catch (err) {
         next(err);
-      }
-}
+    }
+};
 
 const update_ticket = async (req, res, next) => {
     try{
