@@ -20,12 +20,15 @@ const confItemsRouterTest = require('./routes/conf_items.routes.js');
 const projectsRouterTest = require('./routes/projects.routes.js');
 const ticketRoutes = require('./routes/tickets.routes.js');
 
+const timesheetRoutes = require('./routes/timesheet.routes.js');
+
 // Uso de routers
 app.use(categoriesRouterTest);
 app.use(companyRouterTest);
 app.use(confItemsRouterTest);
 app.use(projectsRouterTest);
 app.use(ticketRoutes);
+app.use(timesheetRoutes);
 
 // Ruta raíz
 app.get('/', function(req, res) {
