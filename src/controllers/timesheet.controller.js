@@ -154,7 +154,7 @@ const getUserTicketsWithHours = async (req, res) => {
         AND h.day = $2
         AND h.user_id = $1
       WHERE t.ticket_assignee_id = $1
-        AND t.ticket_status_id NOT IN (30096, 30001)
+        AND t.ticket_status_id NOT IN (30001)
       ORDER BY t.ticket_creation_date DESC
     `;
 
