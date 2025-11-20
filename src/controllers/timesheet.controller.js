@@ -154,7 +154,7 @@ const getUserTicketsWithHours = async (req, res) => {
         AND h.day = $2
         AND h.user_id = $1
       WHERE t.ticket_assignee_id = $1
-        AND t.ticket_status_id NOT IN (30096, 30001)
+        AND t.ticket_status_id NOT IN (30001)
       ORDER BY t.ticket_creation_date DESC
     `;
 
@@ -205,7 +205,105 @@ const getUserTicketsWithHours = async (req, res) => {
   }
 };
 
+const deleteTimesheet = async (req, res, next) => {
+    try {
+        const { user_id, project_id, day } = req.body;
+
+        // Validaciones
+        if (!user_id || !project_id || !day) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: user_id, project_id, day'
+            });
+        }
+
+        // Validar formato de fecha (YYYY-MM-DD)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(day)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid date format. Expected YYYY-MM-DD'
+            });
+        }
+
+        // Ejecutar DELETE y capturar el registro eliminado
+        const result = await db.query(
+            `DELETE FROM im_hours 
+             WHERE user_id = $1 
+               AND project_id = $2 
+               AND day = $3 
+             RETURNING hour_id, hours, days`,
+            [user_id, project_id, day]
+        );
+
+        // Verificar si se eliminó algo
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No timesheet record found for the specified user, project and date'
+            });
+        }
+
+        const deletedRecord = result.rows[0];
+
+        // Recalcular totales del proyecto (igual que en create/update)
+        const totalsResult = await db.query(
+            `WITH RECURSIVE project_hierarchy AS (
+                SELECT project_id
+                FROM im_projects
+                WHERE project_id = $1
+                UNION ALL
+                SELECT p.project_id
+                FROM im_projects p
+                INNER JOIN project_hierarchy ph ON p.parent_id = ph.project_id
+            )
+            SELECT 
+                COALESCE(SUM(h.hours), 0) as total_hours,
+                COALESCE(SUM(h.days), 0) as total_days
+            FROM im_hours h
+            WHERE h.project_id IN (SELECT project_id FROM project_hierarchy)`,
+            [project_id]
+        );
+
+        const { total_hours, total_days } = totalsResult.rows[0];
+
+        // Actualizar cache del proyecto
+        await db.query(
+            `UPDATE im_projects
+             SET reported_hours_cache = $1,
+                 reported_days_cache = $2
+             WHERE project_id = $3`,
+            [total_hours, total_days, project_id]
+        );
+
+        // Respuesta exitosa
+        return res.status(200).json({
+            success: true,
+            message: 'Timesheet record deleted successfully',
+            data: {
+                hour_id: deletedRecord.hour_id,
+                deleted_hours: deletedRecord.hours,
+                deleted_days: deletedRecord.days,
+                project_totals: {
+                    total_hours: parseFloat(total_hours),
+                    total_days: parseFloat(total_days)
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error in deleteTimesheet:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+};
+
+
 module.exports = {
     createOrUpdateTimesheet,
-    getUserTicketsWithHours
+    getUserTicketsWithHours,
+    deleteTimesheet
 };
