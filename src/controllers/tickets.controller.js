@@ -274,11 +274,13 @@ const getTicket = async (req, res, next) => {
         const client = await pool.connect(); // creates connection
         const ticket_id   = req.params.ticket_id;
         const { page, size } = req.query;
+
         const query = `
-                    
-                select p.project_nr as NR,
+            select 
+                p.project_nr as NR,
                 t.ticket_id as TICKET_ID,
                 t.ticket_type_id as TICKET_TYPE_ID,
+                t.ticket_service_catalog_new as TICKET_SERVICE_CATALOG_NEW,
                 p.project_name as Nombre, 
                 im_category_from_id(t.ticket_status_id) as STATUS, 
                 im_category_from_id(t.ticket_type_id) as TYPE, 
@@ -298,14 +300,14 @@ const getTicket = async (req, res, next) => {
                 im_category_from_id(t.ticket_custom_class) as CUSTOM_CLASS, 
                 im_category_from_id(t.ticket_solution_category) as SOLUTION_CATEGORY, 
                 to_char(p.reported_hours_cache, '999D9') as REPORTED_HOURS 
-                from im_tickets t, im_projects p, acs_objects o 
-                where t.ticket_id = ${ticket_id}
-                and t.ticket_id = p.project_id 
-                and t.ticket_id = o.object_id 
-                LIMIT $2
-                OFFSET (($1 - 1) * $2)
-    
+            from im_tickets t, im_projects p, acs_objects o 
+            where t.ticket_id = ${ticket_id}
+            and t.ticket_id = p.project_id 
+            and t.ticket_id = o.object_id 
+            LIMIT $2
+            OFFSET (($1 - 1) * $2)
         `;
+
         try {
             const { rows } = await client.query(query, [page, size]); // sends query
             res.status(200).json(rows);
@@ -315,8 +317,9 @@ const getTicket = async (req, res, next) => {
     }
     catch (err) {
         next(err);
-      }
+    }
 }
+
 
 
 const create_ticket = async (req, res, next) => {
