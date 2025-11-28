@@ -8,6 +8,7 @@ const getServiceCatalog = async (req, res, next) => {
         const query = `
             SELECT *
             FROM itsm_service_catalog
+            where enabled = true
         `;
 
         try {
