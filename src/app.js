@@ -21,7 +21,7 @@ const projectsRouterTest = require('./routes/projects.routes.js');
 const ticketRoutes = require('./routes/tickets.routes.js');
 const serviceCatalogRoutes = require('./routes/service-catalog.routes.js');
 const timesheetRoutes = require('./routes/timesheet.routes.js');
-
+const solutionCategoryRoutes = require('./routes/solution-category.routes.js');
 // Uso de routers
 app.use(categoriesRouterTest);
 app.use(companyRouterTest);
@@ -30,6 +30,7 @@ app.use(projectsRouterTest);
 app.use(ticketRoutes);
 app.use(timesheetRoutes);
 app.use(serviceCatalogRoutes);
+app.use(solutionCategoryRoutes);
 
 // Ruta raíz
 app.get('/', function(req, res) {
