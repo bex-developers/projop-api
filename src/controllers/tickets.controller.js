@@ -226,10 +226,14 @@ const getTicketsAll = async (req, res, next) => {
 //         const client = await pool.connect(); // creates connection
 //         const ticket_id   = req.params.ticket_id;
 //         const { page, size } = req.query;
+
 //         const query = `
-                    
-//                 select p.project_nr as NR,
+//             select 
+//                 p.project_nr as NR,
 //                 t.ticket_id as TICKET_ID,
+//                 t.ticket_type_id as TICKET_TYPE_ID,
+//                 t.ticket_service_catalog_new as TICKET_SERVICE_CATALOG_NEW,
+//                 t.ticket_solution_category_new as TICKET_SOLUTION_CATEGORY_NEW,
 //                 p.project_name as Nombre, 
 //                 im_category_from_id(t.ticket_status_id) as STATUS, 
 //                 im_category_from_id(t.ticket_type_id) as TYPE, 
@@ -238,7 +242,8 @@ const getTicketsAll = async (req, res, next) => {
 //                 acs_object__name(t.ticket_assignee_id) as ASSIGNEE, 
 //                 acs_object__name(t.ticket_conf_item_id) as CONF_ITEM, 
 //                 t.ticket_creation_date as CREATION_DATE, 
-//                 t.ticket_done_date as DONE_DATE, t.ticket_irt as IRT, 
+//                 t.ticket_done_date as DONE_DATE, 
+//                 t.ticket_irt as IRT, 
 //                 t.ticket_mpt as MPT, 
 //                 t.ticket_solution as TICKET_SOLUTION, 
 //                 t.ticket_quoted_hours as QUOTED_HOURS, 
@@ -248,14 +253,14 @@ const getTicketsAll = async (req, res, next) => {
 //                 im_category_from_id(t.ticket_custom_class) as CUSTOM_CLASS, 
 //                 im_category_from_id(t.ticket_solution_category) as SOLUTION_CATEGORY, 
 //                 to_char(p.reported_hours_cache, '999D9') as REPORTED_HOURS 
-//                 from im_tickets t, im_projects p, acs_objects o 
-//                 where t.ticket_id = ${ticket_id}
-//                 and t.ticket_id = p.project_id 
-//                 and t.ticket_id = o.object_id 
-//                 LIMIT $2
-//                 OFFSET (($1 - 1) * $2)
-    
+//             from im_tickets t, im_projects p, acs_objects o 
+//             where t.ticket_id = ${ticket_id}
+//             and t.ticket_id = p.project_id 
+//             and t.ticket_id = o.object_id 
+//             LIMIT $2
+//             OFFSET (($1 - 1) * $2)
 //         `;
+
 //         try {
 //             const { rows } = await client.query(query, [page, size]); // sends query
 //             res.status(200).json(rows);
@@ -265,14 +270,12 @@ const getTicketsAll = async (req, res, next) => {
 //     }
 //     catch (err) {
 //         next(err);
-//       }
+//     }
 // }
-
 const getTicket = async (req, res, next) => {
-    try{
-        //paginacion
-        const client = await pool.connect(); // creates connection
-        const ticket_id   = req.params.ticket_id;
+    try {
+        const client = await pool.connect();
+        const ticket_id = req.params.ticket_id;
         const { page, size } = req.query;
 
         const query = `
@@ -281,6 +284,7 @@ const getTicket = async (req, res, next) => {
                 t.ticket_id as TICKET_ID,
                 t.ticket_type_id as TICKET_TYPE_ID,
                 t.ticket_service_catalog_new as TICKET_SERVICE_CATALOG_NEW,
+                t.ticket_solution_category_new as TICKET_SOLUTION_CATEGORY_NEW,
                 p.project_name as Nombre, 
                 im_category_from_id(t.ticket_status_id) as STATUS, 
                 im_category_from_id(t.ticket_type_id) as TYPE, 
@@ -299,7 +303,23 @@ const getTicket = async (req, res, next) => {
                 im_category_from_id(t.ticket_customer_company) as CUSTOMER_COMPANY, 
                 im_category_from_id(t.ticket_custom_class) as CUSTOM_CLASS, 
                 im_category_from_id(t.ticket_solution_category) as SOLUTION_CATEGORY, 
-                to_char(p.reported_hours_cache, '999D9') as REPORTED_HOURS 
+                to_char(p.reported_hours_cache, '999D9') as REPORTED_HOURS,
+
+                (
+                    SELECT SUM(h.hours)
+                    FROM im_hours h
+                    WHERE h.user_id = t.ticket_assignee_id
+                      AND h.project_id IN (
+                            SELECT children.project_id
+                            FROM im_projects parent,
+                                 im_projects children
+                            WHERE children.tree_sortkey BETWEEN parent.tree_sortkey AND tree_right(parent.tree_sortkey)
+                              AND parent.project_id = t.ticket_id
+                            UNION
+                            SELECT t.ticket_id
+                      )
+                ) AS total_hours_user
+
             from im_tickets t, im_projects p, acs_objects o 
             where t.ticket_id = ${ticket_id}
             and t.ticket_id = p.project_id 
@@ -309,16 +329,15 @@ const getTicket = async (req, res, next) => {
         `;
 
         try {
-            const { rows } = await client.query(query, [page, size]); // sends query
+            const { rows } = await client.query(query, [page, size]);
             res.status(200).json(rows);
         } finally {
-            await client.release(); // releases connection
+            await client.release();
         }
-    }
-    catch (err) {
+    } catch (err) {
         next(err);
     }
-}
+};
 
 
 
@@ -410,28 +429,85 @@ const create_ticket = async (req, res, next) => {
 
 
 
-const update_ticket = async (req, res, next) => {
-    try{
-         const  ticket_id   = req.params.ticket_id;
-         const  ticket_status_id   = req.body.ticket_status_id;
-         const  ticket_quoted_hours   = req.body.ticket_quoted_hours;
-         const  ticket_solution   = req.body.ticket_solution;
+// const update_ticket = async (req, res, next) => {
+//     try{
+//          const  ticket_id   = req.params.ticket_id;
+//          const  ticket_status_id   = req.body.ticket_status_id;
+//          const  ticket_quoted_hours   = req.body.ticket_quoted_hours;
+//          const  ticket_solution   = req.body.ticket_solution;
 
-//const  ticket_solution = req.body.ticket_solution.tostring();
-         console.log('cuerpo', req.body) 
+// //const  ticket_solution = req.body.ticket_solution.tostring();
+//          console.log('cuerpo', req.body) 
 
-        const response = await pool.query(`UPDATE im_tickets SET
-        ticket_status_id =${ticket_status_id},
-        ticket_quoted_hours\t =${ticket_quoted_hours},
-        ticket_solution\t ='${ticket_solution}'
+//         const response = await pool.query(`UPDATE im_tickets SET
+//         ticket_status_id =${ticket_status_id},
+//         ticket_quoted_hours\t =${ticket_quoted_hours},
+//         ticket_solution\t ='${ticket_solution}'
         
-        WHERE ticket_id = ${ticket_id} `);                                     
-        res.status(200).json(response.rows);
-    }
-    catch (err) {
+//         WHERE ticket_id = ${ticket_id} `);                                     
+//         res.status(200).json(response.rows);
+//     }
+//     catch (err) {
+//         next(err);
+//       }
+// }
+
+const update_ticket = async (req, res, next) => {
+    try {
+        const ticket_id = req.params.ticket_id;
+
+        const {
+            ticket_status_id,
+            ticket_quoted_hours,
+            ticket_solution,
+            ticket_service_catalog_new,
+            ticket_solution_category_new
+        } = req.body;
+
+        console.log("cuerpo", req.body);
+
+        // Validar campos obligatorios
+        if (
+            ticket_status_id === undefined ||
+            ticket_quoted_hours === undefined ||
+            ticket_solution === undefined
+        ) {
+            return res.status(400).json({
+                error: "ticket_status_id, ticket_quoted_hours y ticket_solution son obligatorios"
+            });
+        }
+
+        // Construcción dinámica del UPDATE
+        let fields = [];
+
+        // Obligatorios
+        fields.push(`ticket_status_id = ${ticket_status_id}`);
+        fields.push(`ticket_quoted_hours = ${ticket_quoted_hours}`);
+        fields.push(`ticket_solution = '${ticket_solution}'`);
+
+        // Opcionales
+        if (ticket_service_catalog_new !== undefined) {
+            fields.push(`ticket_service_catalog_new = ${ticket_service_catalog_new}`);
+        }
+
+        if (ticket_solution_category_new !== undefined) {
+            fields.push(`ticket_solution_category_new = ${ticket_solution_category_new}`);
+        }
+
+        const query = `
+            UPDATE im_tickets
+            SET ${fields.join(", ")}
+            WHERE ticket_id = ${ticket_id}
+        `;
+
+        await pool.query(query);
+
+        res.status(200).json({ message: "Ticket updated successfully" });
+
+    } catch (err) {
         next(err);
-      }
-}
+    }
+};
 
 const status_ticket = async (req, res, next) => {
     try {
@@ -464,6 +540,61 @@ const solution_category = async (req, res, next) => {
       }
 }
 
+const addMemberToTicket = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { ticket_id } = req.params;
+        const { user_id } = req.body;
+
+        if (!user_id) {
+            return res.status(400).json({ error: "user_id es requerido" });
+        }
+
+        await client.query('BEGIN');
+
+        // 1. Ejecutar acs_rel__new
+        const relResult = await client.query(
+            `
+            SELECT acs_rel__new(
+                NULL::integer,
+                'im_biz_object_member'::varchar,
+                $1::integer,
+                $2::integer,
+                $1::integer,
+                NULL::integer,
+                NULL::varchar
+            ) AS rel_id;
+            `,
+            [ticket_id, user_id]
+        );
+
+        const rel_id = relResult.rows[0].rel_id;
+
+        // 2. Insertar en im_biz_object_members
+        await client.query(
+            `
+            INSERT INTO im_biz_object_members (rel_id, object_role_id)
+            VALUES ($1, 1300);
+            `,
+            [rel_id]
+        );
+
+        await client.query('COMMIT');
+
+        return res.json({
+            message: "Miembro agregado correctamente",
+            rel_id
+        });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error("Error agregando miembro:", error);
+        return res.status(500).json({ error: "Error agregando miembro" });
+    } finally {
+        client.release();
+    }
+};
+
 module.exports = {
   getTickets,
   getTicketsAdmin,
@@ -474,5 +605,6 @@ module.exports = {
   create_ticket,
   update_ticket,
   status_ticket,
-  solution_category
+  solution_category,
+  addMemberToTicket
 };

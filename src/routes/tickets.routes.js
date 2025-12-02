@@ -10,7 +10,8 @@ const {
   create_ticket,
   update_ticket,
   status_ticket,
-  solution_category
+  solution_category,
+  addMemberToTicket
 } = require('../controllers/tickets.controller');
 
 // Rutas de tickets
@@ -25,8 +26,7 @@ router.get('/tickets/status_ticket', status_ticket);
 router.get('/tickets/solution_category', solution_category);
 router.get('/v1/tickets/:ticket_id', getTicket);
 
-
+router.post('/ticket/:ticket_id/add-member', addMemberToTicket);
 router.get('/tickets/:company_id', getTicketsAll);
-
 
 module.exports = router;
