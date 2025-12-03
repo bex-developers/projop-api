@@ -220,11 +220,11 @@ const getTicketsAll = async (req, res, next) => {
       }
 }
 
+
 // const getTicket = async (req, res, next) => {
-//     try{
-//         //paginacion
-//         const client = await pool.connect(); // creates connection
-//         const ticket_id   = req.params.ticket_id;
+//     try {
+//         const client = await pool.connect();
+//         const ticket_id = req.params.ticket_id;
 //         const { page, size } = req.query;
 
 //         const query = `
@@ -252,7 +252,23 @@ const getTicketsAll = async (req, res, next) => {
 //                 im_category_from_id(t.ticket_customer_company) as CUSTOMER_COMPANY, 
 //                 im_category_from_id(t.ticket_custom_class) as CUSTOM_CLASS, 
 //                 im_category_from_id(t.ticket_solution_category) as SOLUTION_CATEGORY, 
-//                 to_char(p.reported_hours_cache, '999D9') as REPORTED_HOURS 
+//                 to_char(p.reported_hours_cache, '999D9') as REPORTED_HOURS,
+
+//                 (
+//                     SELECT SUM(h.hours)
+//                     FROM im_hours h
+//                     WHERE h.user_id = t.ticket_assignee_id
+//                       AND h.project_id IN (
+//                             SELECT children.project_id
+//                             FROM im_projects parent,
+//                                  im_projects children
+//                             WHERE children.tree_sortkey BETWEEN parent.tree_sortkey AND tree_right(parent.tree_sortkey)
+//                               AND parent.project_id = t.ticket_id
+//                             UNION
+//                             SELECT t.ticket_id
+//                       )
+//                 ) AS total_hours_user
+
 //             from im_tickets t, im_projects p, acs_objects o 
 //             where t.ticket_id = ${ticket_id}
 //             and t.ticket_id = p.project_id 
@@ -262,16 +278,17 @@ const getTicketsAll = async (req, res, next) => {
 //         `;
 
 //         try {
-//             const { rows } = await client.query(query, [page, size]); // sends query
+//             const { rows } = await client.query(query, [page, size]);
 //             res.status(200).json(rows);
 //         } finally {
-//             await client.release(); // releases connection
+//             await client.release();
 //         }
-//     }
-//     catch (err) {
+//     } catch (err) {
 //         next(err);
 //     }
-// }
+// };
+
+
 const getTicket = async (req, res, next) => {
     try {
         const client = await pool.connect();
@@ -313,15 +330,23 @@ const getTicket = async (req, res, next) => {
                             SELECT children.project_id
                             FROM im_projects parent,
                                  im_projects children
-                            WHERE children.tree_sortkey BETWEEN parent.tree_sortkey AND tree_right(parent.tree_sortkey)
+                            WHERE children.tree_sortkey BETWEEN parent.tree_sortkey 
+                                                          AND tree_right(parent.tree_sortkey)
                               AND parent.project_id = t.ticket_id
                             UNION
                             SELECT t.ticket_id
                       )
-                ) AS total_hours_user
+                ) AS total_hours_user,
+
+                (
+                    SELECT COUNT(*)
+                    FROM acs_rels r
+                    WHERE r.object_id_one = t.ticket_id
+                      AND r.rel_type = 'im_biz_object_member'
+                ) AS number_members_in_ticket
 
             from im_tickets t, im_projects p, acs_objects o 
-            where t.ticket_id = ${ticket_id}
+            where t.ticket_id = $3
             and t.ticket_id = p.project_id 
             and t.ticket_id = o.object_id 
             LIMIT $2
@@ -329,7 +354,7 @@ const getTicket = async (req, res, next) => {
         `;
 
         try {
-            const { rows } = await client.query(query, [page, size]);
+            const { rows } = await client.query(query, [page, size, ticket_id]);
             res.status(200).json(rows);
         } finally {
             await client.release();
@@ -338,6 +363,7 @@ const getTicket = async (req, res, next) => {
         next(err);
     }
 };
+
 
 
 
