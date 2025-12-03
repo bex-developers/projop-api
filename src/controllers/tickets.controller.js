@@ -293,48 +293,48 @@ const getTicket = async (req, res, next) => {
     try {
         const client = await pool.connect();
         const ticket_id = req.params.ticket_id;
-        const { page = 1, size = 10 } = req.query;
+        const { page, size } = req.query;
 
         const query = `
-            SELECT 
-                p.project_nr AS NR,
-                t.ticket_id AS TICKET_ID,
-                t.ticket_type_id AS TICKET_TYPE_ID,
-                t.ticket_service_catalog_new AS TICKET_SERVICE_CATALOG_NEW,
-                t.ticket_solution_category_new AS TICKET_SOLUTION_CATEGORY_NEW,
-                p.project_name AS Nombre, 
-                im_category_from_id(t.ticket_status_id) AS STATUS, 
-                im_category_from_id(t.ticket_type_id) AS TYPE, 
-                im_category_from_id(t.ticket_prio_id) AS PRIO, 
-                acs_object__name(t.ticket_customer_contact_id) AS CONTACT_NAME, 
-                acs_object__name(t.ticket_assignee_id) AS ASSIGNEE, 
-                acs_object__name(t.ticket_conf_item_id) AS CONF_ITEM, 
-                t.ticket_creation_date AS CREATION_DATE, 
-                t.ticket_done_date AS DONE_DATE, 
-                t.ticket_irt AS IRT, 
-                t.ticket_mpt AS MPT, 
-                t.ticket_solution AS TICKET_SOLUTION, 
-                t.ticket_quoted_hours AS QUOTED_HOURS, 
-                im_category_from_id(t.ticket_customer_project) AS CUSTOMER_PROJECT, 
-                im_category_from_id(t.ticket_service_catalog) AS SERVICE_CATALOG, 
-                im_category_from_id(t.ticket_customer_company) AS CUSTOMER_COMPANY, 
-                im_category_from_id(t.ticket_custom_class) AS CUSTOM_CLASS, 
-                im_category_from_id(t.ticket_solution_category) AS SOLUTION_CATEGORY, 
-                to_char(p.reported_hours_cache, '999D9') AS REPORTED_HOURS,
+            select 
+                p.project_nr as NR,
+                t.ticket_id as TICKET_ID,
+                t.ticket_type_id as TICKET_TYPE_ID,
+                t.ticket_service_catalog_new as TICKET_SERVICE_CATALOG_NEW,
+                t.ticket_solution_category_new as TICKET_SOLUTION_CATEGORY_NEW,
+                p.project_name as Nombre, 
+                im_category_from_id(t.ticket_status_id) as STATUS, 
+                im_category_from_id(t.ticket_type_id) as TYPE, 
+                im_category_from_id(t.ticket_prio_id) as PRIO, 
+                acs_object__name(t.ticket_customer_contact_id) as CONTACT_NAME, 
+                acs_object__name(t.ticket_assignee_id) as ASSIGNEE, 
+                acs_object__name(t.ticket_conf_item_id) as CONF_ITEM, 
+                t.ticket_creation_date as CREATION_DATE, 
+                t.ticket_done_date as DONE_DATE, 
+                t.ticket_irt as IRT, 
+                t.ticket_mpt as MPT, 
+                t.ticket_solution as TICKET_SOLUTION, 
+                t.ticket_quoted_hours as QUOTED_HOURS, 
+                im_category_from_id(t.ticket_customer_project) as CUSTOMER_PROJECT, 
+                im_category_from_id(t.ticket_service_catalog) as SERVICE_CATALOG, 
+                im_category_from_id(t.ticket_customer_company) as CUSTOMER_COMPANY, 
+                im_category_from_id(t.ticket_custom_class) as CUSTOM_CLASS, 
+                im_category_from_id(t.ticket_solution_category) as SOLUTION_CATEGORY, 
+                to_char(p.reported_hours_cache, '999D9') as REPORTED_HOURS,
 
                 (
                     SELECT SUM(h.hours)
                     FROM im_hours h
                     WHERE h.user_id = t.ticket_assignee_id
                       AND h.project_id IN (
-                        SELECT children.project_id
-                        FROM im_projects parent,
-                             im_projects children
-                        WHERE children.tree_sortkey BETWEEN parent.tree_sortkey 
-                                                      AND tree_right(parent.tree_sortkey)
-                          AND parent.project_id = t.ticket_id
-                        UNION
-                        SELECT t.ticket_id
+                            SELECT children.project_id
+                            FROM im_projects parent,
+                                 im_projects children
+                            WHERE children.tree_sortkey BETWEEN parent.tree_sortkey 
+                                                          AND tree_right(parent.tree_sortkey)
+                              AND parent.project_id = t.ticket_id
+                            UNION
+                            SELECT t.ticket_id
                       )
                 ) AS total_hours_user,
 
@@ -345,10 +345,10 @@ const getTicket = async (req, res, next) => {
                       AND r.rel_type = 'im_biz_object_member'
                 ) AS number_members_in_ticket
 
-            FROM im_tickets t
-            JOIN im_projects p ON t.ticket_id = p.project_id
-            JOIN acs_objects o ON t.ticket_id = o.object_id
-            WHERE t.ticket_id = $3
+            from im_tickets t, im_projects p, acs_objects o 
+            where t.ticket_id = $3
+            and t.ticket_id = p.project_id 
+            and t.ticket_id = o.object_id 
             LIMIT $2
             OFFSET (($1 - 1) * $2)
         `;
@@ -357,12 +357,13 @@ const getTicket = async (req, res, next) => {
             const { rows } = await client.query(query, [page, size, ticket_id]);
             res.status(200).json(rows);
         } finally {
-            client.release();
+            await client.release();
         }
     } catch (err) {
         next(err);
     }
 };
+
 
 
 
