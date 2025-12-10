@@ -388,11 +388,88 @@ const getSupportTicketsWithHours = async (req, res) => {
   }
 };
 
+const getUserHoursSummary = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const date = req.query.date || new Date().toISOString().split('T')[0];
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID es requerido"
+      });
+    }
+
+    // Horas normales
+    const normalResult = await db.query(
+      `
+        SELECT h.hours
+        FROM im_hours h
+        INNER JOIN im_tickets t
+          ON h.project_id = t.ticket_id
+        WHERE h.user_id = $1
+          AND h.day = $2
+          AND t.ticket_assignee_id = $1
+          AND t.ticket_status_id NOT IN (30001)
+      `,
+      [userId, date]
+    );
+
+    // Horas de apoyo
+    const supportResult = await db.query(
+      `
+        SELECT h.hours
+        FROM im_hours h
+        INNER JOIN im_tickets t
+          ON h.project_id = t.ticket_id
+        INNER JOIN acs_rels r
+          ON r.object_id_one = t.ticket_id
+        WHERE h.user_id = $1
+          AND h.day = $2
+          AND r.object_id_two = $1
+          AND t.ticket_assignee_id <> $1
+          AND t.ticket_status_id NOT IN (30001)
+      `,
+      [userId, date]
+    );
+
+    // Suma normal
+    const normal_hours = normalResult.rows.reduce(
+      (sum, r) => sum + Number(r.hours || 0),
+      0
+    );
+
+    // Suma apoyo
+    const support_hours = supportResult.rows.reduce(
+      (sum, r) => sum + Number(r.hours || 0),
+      0
+    );
+
+    const total_hours = normal_hours + support_hours;
+
+    return res.json({
+      success: true,
+      date,
+      total_hours,
+      normal_hours,
+      support_hours
+    });
+
+  } catch (error) {
+    console.error("Error en getUserHoursSummary:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener resumen de horas",
+      error: error.message
+    });
+  }
+};
 
 
 module.exports = {
     createOrUpdateTimesheet,
     getUserTicketsWithHours,
     deleteTimesheet,
-    getSupportTicketsWithHours
+    getSupportTicketsWithHours,
+    getUserHoursSummary
 };
