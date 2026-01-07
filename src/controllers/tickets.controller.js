@@ -214,6 +214,7 @@ const getOpenTicketsEmail = async (req, res, next) => {
               and t.ticket_id = o.object_id 
               -- and p.company_id is distinct from 8720
               -- and t.ticket_status_id not in (30096,30001)
+              and t.ticket_status_id <> 30001
               and t.ticket_assignee_id = (
                     SELECT u.user_id AS user_id
                     FROM users u, im_employees e
