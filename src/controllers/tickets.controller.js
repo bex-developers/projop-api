@@ -672,6 +672,7 @@ const status_ticket = async (req, res, next) => {
             from im_categories 
             where category_type = 'Intranet Ticket Status' 
             and enabled_p = 't'
+            and category not in ('Closed','Open')
         `;
 
         const response = await pool.query(query);
@@ -688,19 +689,24 @@ const status_ticket = async (req, res, next) => {
 const ticket_type = async (req, res, next) => {
     try {
         const query = `
-            select category_id, category 
-            from im_categories 
-            where category_type = 'Intranet Ticket Type' 
-            and enabled_p = 't'
+            SELECT c.category_id, c.category 
+            FROM im_categories c
+            INNER JOIN im_category_hierarchy ch ON c.category_id = ch.child_id
+            INNER JOIN im_categories parent ON ch.parent_id = parent.category_id
+            WHERE parent.category IN ($1, $2)
+            AND parent.category_type = $3
+            AND parent.enabled_p = $4
+            AND c.enabled_p = $4
         `;
 
-        const response = await pool.query(query);
+        const values = ['Service Req Ticket', 'Incident Ticket', 'Intranet Ticket Type', 't'];
+        const response = await pool.query(query, values);
         res.status(200).json(response.rows);
     } catch (err) {
-        console.error("Error al ejecutar status_ticket:", err); // ✅ Mensaje explícito
+        console.error("Error al ejecutar ticket_type:", err);
         return res.status(500).json({
             message: err.message,
-            stack: err.stack, // ✅ Mostrar trazado completo
+            stack: err.stack,
         });
     }
 };
@@ -712,6 +718,7 @@ const ticket_company_type = async (req, res, next) => {
             from im_categories 
             where category_type = 'Intranet Company Type' 
             and enabled_p = 't'
+            and category in ('Internal', 'Customer')
         `;
 
         const response = await pool.query(query);
