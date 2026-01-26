@@ -582,31 +582,95 @@ const create_ticket = async (req, res, next) => {
         next(err);
     }
 };
+const create_ticket_v3 = async (req, res, next) => {
+    try {
+        const {
+            p_ticket_id,
+            p_object_type,
+            p_creation_user,
+            p_creation_ip,
+            p_context_id,
+            p_ticket_name,
+            p_ticket_customer_id,
+            p_ticket_type_id,
+            p_ticket_status_id,
+            p_ticket_prio_id,
+            p_parent_id,
+            p_ticket_description,
+            p_ticket_service_catalog,
+            p_ticket_customer_company,
+            p_ticket_customer_project,
+            p_ticket_custom_class,
+            p_ticket_conf_item_id,
+            p_ticket_customer_contact_id,
+            p_ticket_customer_deadline,
+            p_ticket_solution_category,
+            // nuevos campos
+            p_ticket_assignee_id,
+            p_ticket_service_catalog_new,
+            p_bex_ticket_overtime,
+            p_bex_ticket_downtime_hours,
+            p_bex_ticket_customer_initial_date,
+            p_ticket_config_item_new
+        } = req.body;
+
+        const p_creation_date = 'now()';
+
+        // Valor por defecto si no hay fecha
+        const deadline = p_ticket_customer_deadline && p_ticket_customer_deadline !== ""
+            ? `'${p_ticket_customer_deadline}'`
+            : "'1900-01-01'";
+
+        const initial_date = p_bex_ticket_customer_initial_date && p_bex_ticket_customer_initial_date !== ""
+            ? `'${p_bex_ticket_customer_initial_date}'`
+            : "'1900-01-01'";
+
+        // Ejecuta la nueva función V2
+        const query = `
+      SELECT public.im_ticket__new__api_v3(
+        ${p_ticket_id || null},
+        '${p_object_type}',
+        ${p_creation_date},
+        ${p_creation_user || null},
+        '${p_creation_ip}',
+        ${p_context_id || null},
+        '${p_ticket_name}',
+        ${p_ticket_customer_id || null},
+        ${p_ticket_type_id || null},
+        ${p_ticket_status_id || null},
+        ${p_ticket_prio_id || null},
+        ${p_parent_id || null},
+        '${p_ticket_description}',
+        ${p_ticket_service_catalog || null},
+        ${p_ticket_customer_company || null},
+        ${p_ticket_customer_project || null},
+        ${p_ticket_custom_class || null},
+        ${p_ticket_conf_item_id || null},
+        ${p_ticket_customer_contact_id || null},
+        ${deadline},
+        ${p_ticket_solution_category || null},
+        ${p_ticket_assignee_id || null},
+        ${p_ticket_service_catalog_new || null},
+        '${p_bex_ticket_overtime || ''}',
+        ${p_bex_ticket_downtime_hours || 0},
+        ${initial_date},
+        ${p_ticket_config_item_new || null}
+      )
+    `;
+
+        console.log('🧾 Ejecutando query:\n', query);
+
+        const response = await pool.query(query);
+        res.status(200).json(response.rows);
+    } catch (err) {
+        console.error('❌ Error en create_ticket_v2:', err);
+        next(err);
+    }
+};
 
 
 
-// const update_ticket = async (req, res, next) => {
-//     try{
-//          const  ticket_id   = req.params.ticket_id;
-//          const  ticket_status_id   = req.body.ticket_status_id;
-//          const  ticket_quoted_hours   = req.body.ticket_quoted_hours;
-//          const  ticket_solution   = req.body.ticket_solution;
 
-// //const  ticket_solution = req.body.ticket_solution.tostring();
-//          console.log('cuerpo', req.body) 
-
-//         const response = await pool.query(`UPDATE im_tickets SET
-//         ticket_status_id =${ticket_status_id},
-//         ticket_quoted_hours\t =${ticket_quoted_hours},
-//         ticket_solution\t ='${ticket_solution}'
-
-//         WHERE ticket_id = ${ticket_id} `);                                     
-//         res.status(200).json(response.rows);
-//     }
-//     catch (err) {
-//         next(err);
-//       }
-// }
 
 const update_ticket = async (req, res, next) => {
     try {
