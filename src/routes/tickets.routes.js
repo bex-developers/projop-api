@@ -11,7 +11,9 @@ const {
   update_ticket,
   status_ticket,
   solution_category,
-  addMemberToTicket
+  addMemberToTicket,
+  ticket_company_type,
+  ticket_type
 } = require('../controllers/tickets.controller');
 
 // Rutas de tickets
@@ -23,6 +25,8 @@ router.get('/open-tickets/:user_email', getOpenTicketsEmail);
 router.post('/tickets/create_ticket', create_ticket);
 router.put('/update_ticket/:ticket_id', update_ticket);
 router.get('/tickets/status_ticket', status_ticket);
+router.get('/tickets/ticket_type', ticket_type);
+router.get('/tickets/ticket_company_type', ticket_company_type);
 router.get('/tickets/solution_category', solution_category);
 router.get('/v1/tickets/:ticket_id', getTicket);
 
