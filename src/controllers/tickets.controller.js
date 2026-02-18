@@ -309,6 +309,174 @@ const getOpenTicketsEmail = async (req, res, next) => {
     }
 };
 
+const getTicketsByCompanyUser = async (req, res, next) => {
+    try {
+        const client = await pool.connect();
+        const user_email = req.params.user_email;
+
+        const { page, size } = req.query;
+        const { status_ids, ticket_type_ids } = req.query;
+
+        let filterConditions = [];
+        let filterParams = [page, size];
+        let paramCounter = 3;
+
+        // Filtro por status_ids
+        if (status_ids) {
+            const statusArray = Array.isArray(status_ids)
+                ? status_ids
+                : status_ids.split(',').map(id => id.trim());
+
+            const placeholders = statusArray.map(() => `$${paramCounter++}`).join(',');
+            filterConditions.push(`t.ticket_status_id IN (${placeholders})`);
+            filterParams.push(...statusArray);
+        }
+
+        // Filtro por ticket_type_ids
+        if (ticket_type_ids) {
+            const typeArray = Array.isArray(ticket_type_ids)
+                ? ticket_type_ids
+                : ticket_type_ids.split(',').map(id => id.trim());
+
+            const placeholders = typeArray.map(() => `$${paramCounter++}`).join(',');
+            filterConditions.push(`t.ticket_type_id IN (${placeholders})`);
+            filterParams.push(...typeArray);
+        }
+
+        const dynamicFilters = filterConditions.length > 0
+            ? 'AND ' + filterConditions.join(' AND ')
+            : '';
+
+        const query = `
+            SELECT 
+                p.project_nr                                AS NR,
+                t.ticket_id                                 AS TICKET_ID,
+                p.project_name                              AS NOMBRE,
+                im_category_from_id(t.ticket_status_id)    AS STATUS,
+                im_category_from_id(t.ticket_type_id)      AS TYPE,
+                im_category_from_id(t.ticket_prio_id)      AS PRIO,
+                acs_object__name(t.ticket_assignee_id)     AS ASSIGNEE,
+                acs_object__name(t.ticket_conf_item_id)    AS CONF_ITEM,
+                t.ticket_creation_date                     AS CREATION_DATE,
+                t.ticket_done_date                         AS DONE_DATE,
+                t.ticket_solution                          AS TICKET_SOLUTION,
+                t.ticket_quoted_hours                      AS QUOTED_HOURS,
+                to_char(p.reported_hours_cache, '999D9')   AS REPORTED_HOURS,
+                c.company_name                             AS COMPANY_NAME
+            FROM im_tickets t
+            INNER JOIN im_projects p  ON t.ticket_id = p.project_id
+            INNER JOIN im_companies c ON p.company_id = c.company_id
+            WHERE t.ticket_status_id <> 30001
+              AND p.company_id = (
+                    SELECT r.object_id_one
+                    FROM users u
+                    INNER JOIN acs_rels r ON u.user_id = r.object_id_two
+                    WHERE u.username = $${paramCounter}
+                      AND r.rel_type = 'im_company_employee_rel'
+                    LIMIT 1
+              )
+              ${dynamicFilters}
+            ORDER BY
+                CASE
+                    WHEN t.ticket_status_id = 30096 THEN 1
+                    ELSE 0
+                END,
+                t.ticket_creation_date DESC
+            LIMIT $2
+            OFFSET (($1 - 1) * $2)
+        `;
+
+        filterParams.push(user_email);
+
+        try {
+            const { rows } = await client.query(query, filterParams);
+            res.status(200).json(rows);
+        } finally {
+            client.release();
+        }
+    } catch (err) {
+        next(err);
+    }
+};
+const getTicketsByCompanyId = async (req, res, next) => {
+    try {
+        const client = await pool.connect();
+        const company_id = req.params.company_id;
+
+        const { page, size } = req.query;
+        const { status_ids, ticket_type_ids } = req.query;
+
+        let filterConditions = [];
+        let filterParams = [page, size, company_id];
+        let paramCounter = 4;
+
+        if (status_ids) {
+            const statusArray = Array.isArray(status_ids)
+                ? status_ids
+                : status_ids.split(',').map(id => id.trim());
+
+            const placeholders = statusArray.map(() => `$${paramCounter++}`).join(',');
+            filterConditions.push(`t.ticket_status_id IN (${placeholders})`);
+            filterParams.push(...statusArray);
+        }
+
+        if (ticket_type_ids) {
+            const typeArray = Array.isArray(ticket_type_ids)
+                ? ticket_type_ids
+                : ticket_type_ids.split(',').map(id => id.trim());
+
+            const placeholders = typeArray.map(() => `$${paramCounter++}`).join(',');
+            filterConditions.push(`t.ticket_type_id IN (${placeholders})`);
+            filterParams.push(...typeArray);
+        }
+
+        const dynamicFilters = filterConditions.length > 0
+            ? 'AND ' + filterConditions.join(' AND ')
+            : '';
+
+        const query = `
+            SELECT 
+                p.project_nr                                AS NR,
+                t.ticket_id                                 AS TICKET_ID,
+                p.project_name                              AS NOMBRE,
+                im_category_from_id(t.ticket_status_id)    AS STATUS,
+                im_category_from_id(t.ticket_type_id)      AS TYPE,
+                im_category_from_id(t.ticket_prio_id)      AS PRIO,
+                acs_object__name(t.ticket_assignee_id)     AS ASSIGNEE,
+                acs_object__name(t.ticket_conf_item_id)    AS CONF_ITEM,
+                t.ticket_creation_date                     AS CREATION_DATE,
+                t.ticket_done_date                         AS DONE_DATE,
+                t.ticket_solution                          AS TICKET_SOLUTION,
+                t.ticket_quoted_hours                      AS QUOTED_HOURS,
+                to_char(p.reported_hours_cache, '999D9')   AS REPORTED_HOURS,
+                c.company_name                             AS COMPANY_NAME
+            FROM im_tickets t
+            INNER JOIN im_projects p  ON t.ticket_id = p.project_id
+            INNER JOIN im_companies c ON p.company_id = c.company_id
+            WHERE t.ticket_status_id <> 30001
+              AND p.company_id = $3
+              ${dynamicFilters}
+            ORDER BY
+                CASE
+                    WHEN t.ticket_status_id = 30096 THEN 1
+                    ELSE 0
+                END,
+                t.ticket_creation_date DESC
+            LIMIT $2
+            OFFSET (($1 - 1) * $2)
+        `;
+
+        try {
+            const { rows } = await client.query(query, filterParams);
+            res.status(200).json(rows);
+        } finally {
+            client.release();
+        }
+    } catch (err) {
+        next(err);
+    }
+};
+
 
 const getTicketsAll = async (req, res, next) => {
     try {
@@ -874,5 +1042,6 @@ module.exports = {
     solution_category,
     addMemberToTicket,
     ticket_type, 
-    ticket_company_type
+    ticket_company_type,
+    getTicketsByCompanyId
 };

@@ -13,7 +13,8 @@ const {
   solution_category,
   addMemberToTicket,
   ticket_company_type,
-  ticket_type
+  ticket_type,
+  getTicketsByCompanyId
 } = require('../controllers/tickets.controller');
 
 // Rutas de tickets
@@ -22,6 +23,8 @@ router.get('/tickets/:company_id/:fecha_inicial/:fecha_final', getTickets);
 router.get('/ticketsAdmin/:fecha_inicial/:fecha_final', getTicketsAdmin);
 router.get('/ticketsHelpDesk/:person_id/:fecha_inicial/:fecha_final', getTicketsHelpDesk);
 router.get('/open-tickets/:user_email', getOpenTicketsEmail);
+router.get('/ticketsByCompanyUser/:company_id', getTicketsByCompanyId);
+
 router.post('/tickets/create_ticket', create_ticket);
 router.put('/update_ticket/:ticket_id', update_ticket);
 router.get('/tickets/status_ticket', status_ticket);
