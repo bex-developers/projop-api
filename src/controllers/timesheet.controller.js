@@ -1,62 +1,6 @@
 const db = require('../config/db');
 
-// const createOrUpdateTimesheet2 = async (req, res, next) => {
-//     try {
-//         const {
-//             user_id,
-//             project_id,
-//             day,
-//             hours,
-//             note,
-//             internal_note,
-//             conf_object_id
-//         } = req.body;
 
-//         // Validaciones básicas
-//         if (!user_id || !project_id || !day || !hours) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Missing required fields: user_id, project_id, day, hours'
-//             });
-//         }
-
-//         if (hours <= 0 || hours > 24) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Hours must be between 0 and 24'
-//             });
-//         }
-
-//         const result = await db.query(
-//             'SELECT * FROM im_hours_create_timesheet($1, $2, $3, $4, $5, $6, $7)',
-//             [user_id, project_id, day, hours, note, internal_note, conf_object_id]
-//         );
-
-//         const data = result.rows[0];
-//         const statusCode = data.action === 'created' ? 201 : 200;
-
-//         return res.status(statusCode).json({
-//             success: true,
-//             message: data.message,
-//             action: data.action,
-//             data: {
-//                 hour_id: data.hour_id,
-//                 hours: data.hours,
-//                 days: data.days
-//             }
-//         });
-
-
-//     } catch (error) {
-//         console.error('Error in createOrUpdateHour:', error);
-
-//         return res.status(500).json({
-//             success: false,
-//             message: 'Internal server error',
-//             error: error.message
-//         });
-//     }
-// }
 const createOrUpdateTimesheet = async (req, res, next) => {
     try {
         const items = Array.isArray(req.body) ? req.body : [req.body];
@@ -120,10 +64,96 @@ const createOrUpdateTimesheet = async (req, res, next) => {
 };
 
 
+// const getUserTicketsWithHours = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+//     const date = req.query.date || new Date().toISOString().split('T')[0]; // Default: hoy
+
+//     // Validaciones
+//     if (!userId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'User ID es requerido'
+//       });
+//     }
+
+//     // Query con JOIN a im_projects y LEFT JOIN a im_hours
+//     const query = `
+//       SELECT 
+//         t.ticket_id,
+//         p.project_name,
+//         t.ticket_status_id,
+//         t.ticket_prio_id,
+//         t.ticket_creation_date,
+//         t.ticket_assignee_id,
+//         h.hour_id,
+//         h.hours,
+//         h.note,
+//         h.day
+//       FROM im_tickets t
+//       INNER JOIN im_projects p 
+//         ON t.ticket_id = p.project_id
+//       LEFT JOIN im_hours h 
+//         ON t.ticket_id = h.project_id 
+//         AND h.day = $2
+//         AND h.user_id = $1
+//       WHERE t.ticket_assignee_id = $1
+//         AND t.ticket_status_id NOT IN (30001)
+//       ORDER BY t.ticket_creation_date DESC
+//     `;
+
+//     // Ejecutar query
+//     const result = await db.query(query, [userId, date]);
+
+//     if (result.rows.length === 0) {
+//       return res.json({
+//         success: true,
+//         data: [],
+//         message: 'No se encontraron tickets asignados',
+//         total: 0,
+//         date: date
+//       });
+//     }
+
+//     // Mapear resultados
+//     const ticketsWithHours = result.rows.map(row => ({
+//       ticket_id: row.ticket_id,
+//       project_name: row.project_name,
+//       ticket_status_id: row.ticket_status_id,
+//       ticket_prio_id: row.ticket_prio_id,
+//       creation_date: row.creation_date,
+//       ticket_assignee_id: row.ticket_assignee_id,
+//       hours_data: row.hour_id ? {
+//         hour_id: row.hour_id,
+//         hours: row.hours,
+//         note: row.note || '',
+//         day: row.day
+//       } : null
+//     }));
+
+//     return res.json({
+//       success: true,
+//       data: ticketsWithHours,
+//       total: ticketsWithHours.length,
+//       date: date,
+//       message: 'Tickets con horas obtenidos exitosamente'
+//     });
+
+//   } catch (error) {
+//     console.error('Error en getUserTicketsWithHours:', error);
+//     return res.status(500).json({
+//       success: false,
+//       message: 'Error al obtener tickets con horas',
+//       error: error.message
+//     });
+//   }
+// };
+
 const getUserTicketsWithHours = async (req, res) => {
   try {
     const { userId } = req.params;
-    const date = req.query.date || new Date().toISOString().split('T')[0]; // Default: hoy
+    const date = req.query.date || new Date().toISOString().split('T')[0];
+    const { date_from, date_to } = req.query;
 
     // Validaciones
     if (!userId) {
@@ -133,7 +163,25 @@ const getUserTicketsWithHours = async (req, res) => {
       });
     }
 
-    // Query con JOIN a im_projects y LEFT JOIN a im_hours
+    // Construir filtro dinámico de fechas
+    let filterConditions = [];
+    let filterParams = [userId, date];
+    let paramCounter = 3;
+
+    if (date_from) {
+      filterConditions.push(`t.ticket_creation_date >= $${paramCounter++}`);
+      filterParams.push(date_from);
+    }
+
+    if (date_to) {
+      filterConditions.push(`t.ticket_creation_date <= $${paramCounter++}`);
+      filterParams.push(date_to + ' 23:59:59');
+    }
+
+    const dynamicFilters = filterConditions.length > 0
+      ? 'AND ' + filterConditions.join(' AND ')
+      : '';
+
     const query = `
       SELECT 
         t.ticket_id,
@@ -155,11 +203,11 @@ const getUserTicketsWithHours = async (req, res) => {
         AND h.user_id = $1
       WHERE t.ticket_assignee_id = $1
         AND t.ticket_status_id NOT IN (30001)
+        ${dynamicFilters}
       ORDER BY t.ticket_creation_date DESC
     `;
 
-    // Ejecutar query
-    const result = await db.query(query, [userId, date]);
+    const result = await db.query(query, filterParams);
 
     if (result.rows.length === 0) {
       return res.json({
@@ -171,7 +219,6 @@ const getUserTicketsWithHours = async (req, res) => {
       });
     }
 
-    // Mapear resultados
     const ticketsWithHours = result.rows.map(row => ({
       ticket_id: row.ticket_id,
       project_name: row.project_name,
@@ -204,6 +251,7 @@ const getUserTicketsWithHours = async (req, res) => {
     });
   }
 };
+
 
 const deleteTimesheet = async (req, res, next) => {
     try {
@@ -301,10 +349,98 @@ const deleteTimesheet = async (req, res, next) => {
     }
 };
 
+// const getSupportTicketsWithHours = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+//     const date = req.query.date || new Date().toISOString().split('T')[0];
+
+//     // Validación
+//     if (!userId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'User ID es requerido'
+//       });
+//     }
+
+//     // Query usando acs_rels para obtener tickets como miembro de apoyo
+//     const query = `
+//       SELECT 
+//         t.ticket_id,
+//         p.project_name,
+//         t.ticket_status_id,
+//         t.ticket_prio_id,
+//         t.ticket_creation_date,
+//         t.ticket_assignee_id,
+//         h.hour_id,
+//         h.hours,
+//         h.note,
+//         h.day
+//       FROM acs_rels r
+//       INNER JOIN im_tickets t 
+//         ON r.object_id_one = t.ticket_id
+//       INNER JOIN im_projects p 
+//         ON t.ticket_id = p.project_id
+//       LEFT JOIN im_hours h
+//         ON t.ticket_id = h.project_id
+//         AND h.day = $2
+//         AND h.user_id = $1
+//       WHERE r.object_id_two = $1
+//         AND t.ticket_assignee_id <> $1
+//         AND t.ticket_status_id NOT IN (30001)
+//       ORDER BY t.ticket_creation_date DESC
+//     `;
+
+//     const result = await db.query(query, [userId, date]);
+
+//     if (result.rows.length === 0) {
+//       return res.json({
+//         success: true,
+//         data: [],
+//         message: 'No se encontraron tickets de apoyo',
+//         total: 0,
+//         date: date
+//       });
+//     }
+
+//     // Mapear datos igual que tu otra función
+//     const ticketsWithHours = result.rows.map(row => ({
+//       ticket_id: row.ticket_id,
+//       project_name: row.project_name,
+//       ticket_status_id: row.ticket_status_id,
+//       ticket_prio_id: row.ticket_prio_id,
+//       creation_date: row.ticket_creation_date,
+//       ticket_assignee_id: row.ticket_assignee_id,
+//       hours_data: row.hour_id ? {
+//         hour_id: row.hour_id,
+//         hours: row.hours,
+//         note: row.note || '',
+//         day: row.day
+//       } : null
+//     }));
+
+//     return res.json({
+//       success: true,
+//       data: ticketsWithHours,
+//       total: ticketsWithHours.length,
+//       date: date,
+//       message: 'Tickets de apoyo obtenidos exitosamente'
+//     });
+
+//   } catch (error) {
+//     console.error('Error en getSupportTicketsWithHours:', error);
+//     return res.status(500).json({
+//       success: false,
+//       message: 'Error al obtener tickets de apoyo',
+//       error: error.message
+//     });
+//   }
+// };
+
 const getSupportTicketsWithHours = async (req, res) => {
   try {
     const { userId } = req.params;
     const date = req.query.date || new Date().toISOString().split('T')[0];
+    const { date_from, date_to } = req.query;
 
     // Validación
     if (!userId) {
@@ -314,7 +450,25 @@ const getSupportTicketsWithHours = async (req, res) => {
       });
     }
 
-    // Query usando acs_rels para obtener tickets como miembro de apoyo
+    // Construir filtro dinámico de fechas
+    let filterConditions = [];
+    let filterParams = [userId, date];
+    let paramCounter = 3;
+
+    if (date_from) {
+      filterConditions.push(`t.ticket_creation_date >= $${paramCounter++}`);
+      filterParams.push(date_from);
+    }
+
+    if (date_to) {
+      filterConditions.push(`t.ticket_creation_date <= $${paramCounter++}`);
+      filterParams.push(date_to + ' 23:59:59');
+    }
+
+    const dynamicFilters = filterConditions.length > 0
+      ? 'AND ' + filterConditions.join(' AND ')
+      : '';
+
     const query = `
       SELECT 
         t.ticket_id,
@@ -339,10 +493,11 @@ const getSupportTicketsWithHours = async (req, res) => {
       WHERE r.object_id_two = $1
         AND t.ticket_assignee_id <> $1
         AND t.ticket_status_id NOT IN (30001)
+        ${dynamicFilters}
       ORDER BY t.ticket_creation_date DESC
     `;
 
-    const result = await db.query(query, [userId, date]);
+    const result = await db.query(query, filterParams);
 
     if (result.rows.length === 0) {
       return res.json({
@@ -354,7 +509,6 @@ const getSupportTicketsWithHours = async (req, res) => {
       });
     }
 
-    // Mapear datos igual que tu otra función
     const ticketsWithHours = result.rows.map(row => ({
       ticket_id: row.ticket_id,
       project_name: row.project_name,
