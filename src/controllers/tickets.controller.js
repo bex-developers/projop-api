@@ -134,65 +134,119 @@ const getTicketsHelpDesk = async (req, res, next) => {
 
 // const getOpenTicketsEmail = async (req, res, next) => {
 //     try {
-//         // paginacion
-//         const client = await pool.connect(); // creates connection
+//         const client = await pool.connect();
 //         const user_email = req.params.user_email;
+
 //         const { page, size } = req.query;
 
+//         const {
+//             company_type_ids,  // IDs de tipos de empresa: "57,58,59"
+//             status_ids,        // IDs de estados: "80000,80001"
+//             ticket_type_ids    // IDs de tipos de ticket: "30200,30201"
+//         } = req.query;
+
+//         // ====== Construir condiciones dinámicas ======
+//         let filterConditions = [];
+//         let filterParams = [page, size]; // Parámetros iniciales ($1, $2)
+//         let paramCounter = 3;
+
+//         // Filtro por company_type_ids
+//         if (company_type_ids) {
+//             const companyTypeArray = Array.isArray(company_type_ids)
+//                 ? company_type_ids
+//                 : company_type_ids.split(',').map(id => id.trim());
+
+//             const placeholders = companyTypeArray.map(() => `$${paramCounter++}`).join(',');
+//             filterConditions.push(`c.company_type_id IN (${placeholders})`);
+//             filterParams.push(...companyTypeArray);
+//         }
+
+//         // Filtro por status_ids
+//         if (status_ids) {
+//             const statusArray = Array.isArray(status_ids)
+//                 ? status_ids
+//                 : status_ids.split(',').map(id => id.trim());
+
+//             const placeholders = statusArray.map(() => `$${paramCounter++}`).join(',');
+//             filterConditions.push(`t.ticket_status_id IN (${placeholders})`);
+//             filterParams.push(...statusArray);
+//         }
+
+//         // Filtro por ticket_type_ids
+//         if (ticket_type_ids) {
+//             const typeArray = Array.isArray(ticket_type_ids)
+//                 ? ticket_type_ids
+//                 : ticket_type_ids.split(',').map(id => id.trim());
+
+//             const placeholders = typeArray.map(() => `$${paramCounter++}`).join(',');
+//             filterConditions.push(`t.ticket_type_id IN (${placeholders})`);
+//             filterParams.push(...typeArray);
+//         }
+
+//         // Construir el WHERE dinámico
+//         const dynamicFilters = filterConditions.length > 0
+//             ? 'AND ' + filterConditions.join(' AND ')
+//             : '';
+
+//         // ====== Query con JOINS y filtros dinámicos ======
 //         const query = `
-//             select p.project_nr as NR,
-//                    t.ticket_id as TICKET_ID,
-//                    p.project_name as Nombre, 
-//                    im_category_from_id(t.ticket_status_id) as STATUS, 
-//                    im_category_from_id(t.ticket_type_id) as TYPE, 
-//                    im_category_from_id(t.ticket_prio_id) as PRIO, 
-//                    acs_object__name(t.ticket_customer_contact_id) as CONTACT_NAME, 
-//                    acs_object__name(t.ticket_assignee_id) as ASSIGNEE, 
-//                    acs_object__name(t.ticket_conf_item_id) as CONF_ITEM, 
-//                    t.ticket_creation_date as CREATION_DATE, 
-//                    t.ticket_done_date as DONE_DATE, 
-//                    t.ticket_irt as IRT, 
-//                    t.ticket_mpt as MPT, 
-//                    t.ticket_solution as TICKET_SOLUTION, 
-//                    t.ticket_quoted_hours as QUOTED_HOURS, 
-//                    im_category_from_id(t.ticket_customer_project) as CUSTOMER_PROJECT, 
-//                    im_category_from_id(t.ticket_service_catalog) as SERVICE_CATALOG, 
-//                    im_category_from_id(t.ticket_customer_company) as CUSTOMER_COMPANY, 
-//                    im_category_from_id(t.ticket_custom_class) as CUSTOM_CLASS, 
-//                    im_category_from_id(t.ticket_solution_category) as SOLUTION_CATEGORY, 
-//                    to_char(p.reported_hours_cache, '999D9') as REPORTED_HOURS 
-//             from im_tickets t, im_projects p, acs_objects o 
-//             where t.ticket_id = p.project_id 
-//               and t.ticket_id = o.object_id 
-//               -- and p.company_id is distinct from 8720
-//               -- and t.ticket_status_id not in (30096,30001)
-//               and t.ticket_status_id <> 30001
-//               and t.ticket_assignee_id = (
+//             SELECT p.project_nr AS NR,
+//                    t.ticket_id AS TICKET_ID,
+//                    p.project_name AS Nombre, 
+//                    im_category_from_id(t.ticket_status_id) AS STATUS, 
+//                    im_category_from_id(t.ticket_type_id) AS TYPE, 
+//                    im_category_from_id(t.ticket_prio_id) AS PRIO, 
+//                    acs_object__name(t.ticket_customer_contact_id) AS CONTACT_NAME, 
+//                    acs_object__name(t.ticket_assignee_id) AS ASSIGNEE, 
+//                    acs_object__name(t.ticket_conf_item_id) AS CONF_ITEM, 
+//                    t.ticket_creation_date AS CREATION_DATE, 
+//                    t.ticket_done_date AS DONE_DATE, 
+//                    t.ticket_irt AS IRT, 
+//                    t.ticket_mpt AS MPT, 
+//                    t.ticket_solution AS TICKET_SOLUTION, 
+//                    t.ticket_quoted_hours AS QUOTED_HOURS, 
+//                    im_category_from_id(t.ticket_customer_project) AS CUSTOMER_PROJECT, 
+//                    im_category_from_id(t.ticket_service_catalog) AS SERVICE_CATALOG, 
+//                    im_category_from_id(t.ticket_customer_company) AS CUSTOMER_COMPANY, 
+//                    im_category_from_id(t.ticket_custom_class) AS CUSTOM_CLASS, 
+//                    im_category_from_id(t.ticket_solution_category) AS SOLUTION_CATEGORY, 
+//                    to_char(p.reported_hours_cache, '999D9') AS REPORTED_HOURS 
+//             FROM im_tickets t
+//             INNER JOIN im_projects p ON t.ticket_id = p.project_id
+//             INNER JOIN im_companies c ON p.company_id = c.company_id
+//             INNER JOIN acs_objects o ON t.ticket_id = o.object_id
+//             WHERE t.ticket_status_id <> 30001
+//               AND t.ticket_assignee_id = (
 //                     SELECT u.user_id AS user_id
-//                     FROM users u, im_employees e
-//                     where u.user_id = e.employee_id
-//                       and u.username = ${user_email}
+//                     FROM users u
+//                     INNER JOIN im_employees e ON u.user_id = e.employee_id
+//                     WHERE u.username = $${paramCounter}
 //               )
-//             order by 
-//                 case 
-//                     when t.ticket_status_id = 30096 then 1
-//                     else 0
-//                 end,
+//               ${dynamicFilters}
+//             ORDER BY 
+//                 CASE 
+//                     WHEN t.ticket_status_id = 30096 THEN 1
+//                     ELSE 0
+//                 END,
 //                 t.ticket_creation_date
 //             LIMIT $2
 //             OFFSET (($1 - 1) * $2)
 //         `;
 
+//         // Agregar user_email al final de los parámetros
+//         filterParams.push(user_email);
+
 //         try {
-//             const { rows } = await client.query(query, [page, size]); // sends query
+//             const { rows } = await client.query(query, filterParams);
 //             res.status(200).json(rows);
 //         } finally {
-//             await client.release(); // releases connection
+//             await client.release();
 //         }
 //     } catch (err) {
 //         next(err);
 //     }
 // };
+
 
 const getOpenTicketsEmail = async (req, res, next) => {
     try {
@@ -204,7 +258,9 @@ const getOpenTicketsEmail = async (req, res, next) => {
         const {
             company_type_ids,  // IDs de tipos de empresa: "57,58,59"
             status_ids,        // IDs de estados: "80000,80001"
-            ticket_type_ids    // IDs de tipos de ticket: "30200,30201"
+            ticket_type_ids,   // IDs de tipos de ticket: "30200,30201"
+            date_from,         // Fecha inicio: "2026-02-01"
+            date_to            // Fecha fin: "2026-02-28"
         } = req.query;
 
         // ====== Construir condiciones dinámicas ======
@@ -243,6 +299,17 @@ const getOpenTicketsEmail = async (req, res, next) => {
             const placeholders = typeArray.map(() => `$${paramCounter++}`).join(',');
             filterConditions.push(`t.ticket_type_id IN (${placeholders})`);
             filterParams.push(...typeArray);
+        }
+
+        // Filtro por rango de fechas (mes actual u otro rango)
+        if (date_from) {
+            filterConditions.push(`t.ticket_creation_date >= $${paramCounter++}`);
+            filterParams.push(date_from);
+        }
+
+        if (date_to) {
+            filterConditions.push(`t.ticket_creation_date <= $${paramCounter++}`);
+            filterParams.push(date_to + ' 23:59:59');
         }
 
         // Construir el WHERE dinámico
@@ -309,6 +376,174 @@ const getOpenTicketsEmail = async (req, res, next) => {
     }
 };
 
+// const getTicketsByCompanyId = async (req, res, next) => {
+//     try {
+//         const client = await pool.connect();
+//         const company_id = req.params.company_id;
+
+//         const { page, size } = req.query;
+//         const { status_ids, ticket_type_ids } = req.query;
+
+//         let filterConditions = [];
+//         let filterParams = [page, size, company_id];
+//         let paramCounter = 4;
+
+//         if (status_ids) {
+//             const statusArray = Array.isArray(status_ids)
+//                 ? status_ids
+//                 : status_ids.split(',').map(id => id.trim());
+
+//             const placeholders = statusArray.map(() => `$${paramCounter++}`).join(',');
+//             filterConditions.push(`t.ticket_status_id IN (${placeholders})`);
+//             filterParams.push(...statusArray);
+//         }
+
+//         if (ticket_type_ids) {
+//             const typeArray = Array.isArray(ticket_type_ids)
+//                 ? ticket_type_ids
+//                 : ticket_type_ids.split(',').map(id => id.trim());
+
+//             const placeholders = typeArray.map(() => `$${paramCounter++}`).join(',');
+//             filterConditions.push(`t.ticket_type_id IN (${placeholders})`);
+//             filterParams.push(...typeArray);
+//         }
+
+//         const dynamicFilters = filterConditions.length > 0
+//             ? 'AND ' + filterConditions.join(' AND ')
+//             : '';
+
+//         const query = `
+//             SELECT 
+//                 p.project_nr                                AS NR,
+//                 t.ticket_id                                 AS TICKET_ID,
+//                 p.project_name                              AS NOMBRE,
+//                 im_category_from_id(t.ticket_status_id)    AS STATUS,
+//                 im_category_from_id(t.ticket_type_id)      AS TYPE,
+//                 im_category_from_id(t.ticket_prio_id)      AS PRIO,
+//                 acs_object__name(t.ticket_assignee_id)     AS ASSIGNEE,
+//                 acs_object__name(t.ticket_conf_item_id)    AS CONF_ITEM,
+//                 t.ticket_creation_date                     AS CREATION_DATE,
+//                 t.ticket_done_date                         AS DONE_DATE,
+//                 t.ticket_solution                          AS TICKET_SOLUTION,
+//                 t.ticket_quoted_hours                      AS QUOTED_HOURS,
+//                 to_char(p.reported_hours_cache, '999D9')   AS REPORTED_HOURS,
+//                 c.company_name                             AS COMPANY_NAME
+//             FROM im_tickets t
+//             INNER JOIN im_projects p  ON t.ticket_id = p.project_id
+//             INNER JOIN im_companies c ON p.company_id = c.company_id
+//             WHERE t.ticket_status_id <> 30001
+//               AND p.company_id = $3
+//               ${dynamicFilters}
+//             ORDER BY
+//                 CASE
+//                     WHEN t.ticket_status_id = 30096 THEN 1
+//                     ELSE 0
+//                 END,
+//                 t.ticket_creation_date DESC
+//             LIMIT $2
+//             OFFSET (($1 - 1) * $2)
+//         `;
+
+//         try {
+//             const { rows } = await client.query(query, filterParams);
+//             res.status(200).json(rows);
+//         } finally {
+//             client.release();
+//         }
+//     } catch (err) {
+//         next(err);
+//     }
+// };
+
+const getTicketsByCompanyId = async (req, res, next) => {
+    try {
+        const client = await pool.connect();
+        const company_id = req.params.company_id;
+
+        const { page, size } = req.query;
+        const { status_ids, ticket_type_ids, date_from, date_to } = req.query;
+
+        let filterConditions = [];
+        let filterParams = [page, size, company_id];
+        let paramCounter = 4;
+
+        if (status_ids) {
+            const statusArray = Array.isArray(status_ids)
+                ? status_ids
+                : status_ids.split(',').map(id => id.trim());
+
+            const placeholders = statusArray.map(() => `$${paramCounter++}`).join(',');
+            filterConditions.push(`t.ticket_status_id IN (${placeholders})`);
+            filterParams.push(...statusArray);
+        }
+
+        if (ticket_type_ids) {
+            const typeArray = Array.isArray(ticket_type_ids)
+                ? ticket_type_ids
+                : ticket_type_ids.split(',').map(id => id.trim());
+
+            const placeholders = typeArray.map(() => `$${paramCounter++}`).join(',');
+            filterConditions.push(`t.ticket_type_id IN (${placeholders})`);
+            filterParams.push(...typeArray);
+        }
+
+        // Filtro por rango de fechas (mes actual u otro rango)
+        if (date_from) {
+            filterConditions.push(`t.ticket_creation_date >= $${paramCounter++}`);
+            filterParams.push(date_from);
+        }
+
+        if (date_to) {
+            filterConditions.push(`t.ticket_creation_date <= $${paramCounter++}`);
+            filterParams.push(date_to + ' 23:59:59');
+        }
+
+        const dynamicFilters = filterConditions.length > 0
+            ? 'AND ' + filterConditions.join(' AND ')
+            : '';
+
+        const query = `
+            SELECT 
+                p.project_nr                                AS NR,
+                t.ticket_id                                 AS TICKET_ID,
+                p.project_name                              AS NOMBRE,
+                im_category_from_id(t.ticket_status_id)    AS STATUS,
+                im_category_from_id(t.ticket_type_id)      AS TYPE,
+                im_category_from_id(t.ticket_prio_id)      AS PRIO,
+                acs_object__name(t.ticket_assignee_id)     AS ASSIGNEE,
+                acs_object__name(t.ticket_conf_item_id)    AS CONF_ITEM,
+                t.ticket_creation_date                     AS CREATION_DATE,
+                t.ticket_done_date                         AS DONE_DATE,
+                t.ticket_solution                          AS TICKET_SOLUTION,
+                t.ticket_quoted_hours                      AS QUOTED_HOURS,
+                to_char(p.reported_hours_cache, '999D9')   AS REPORTED_HOURS,
+                c.company_name                             AS COMPANY_NAME
+            FROM im_tickets t
+            INNER JOIN im_projects p  ON t.ticket_id = p.project_id
+            INNER JOIN im_companies c ON p.company_id = c.company_id
+            WHERE t.ticket_status_id <> 30001
+              AND p.company_id = $3
+              ${dynamicFilters}
+            ORDER BY
+                CASE
+                    WHEN t.ticket_status_id = 30096 THEN 1
+                    ELSE 0
+                END,
+                t.ticket_creation_date DESC
+            LIMIT $2
+            OFFSET (($1 - 1) * $2)
+        `;
+
+        try {
+            const { rows } = await client.query(query, filterParams);
+            res.status(200).json(rows);
+        } finally {
+            client.release();
+        }
+    } catch (err) {
+        next(err);
+    }
+};
 
 const getTicketsAll = async (req, res, next) => {
     try {
@@ -874,5 +1109,6 @@ module.exports = {
     solution_category,
     addMemberToTicket,
     ticket_type, 
-    ticket_company_type
+    ticket_company_type,
+    getTicketsByCompanyId
 };
